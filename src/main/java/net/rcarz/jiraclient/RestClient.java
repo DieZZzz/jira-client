@@ -116,7 +116,7 @@ public class RestClient {
         URIBuilder ub = new URIBuilder(uri);
         ub.setPath(ub.getPath() + path);
 
-        if (params != null) {
+        if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, String> ent : params.entrySet())
                 ub.addParameter(ent.getKey(), ent.getValue());
         }
