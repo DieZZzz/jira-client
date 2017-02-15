@@ -801,7 +801,7 @@ public class Issue extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Issue(RestClient restclient, JSONObject json) {
+    public Issue(RestClient restclient, JSONObject json) {
         super(restclient);
 
         if (json != null)
