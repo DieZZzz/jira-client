@@ -1651,6 +1651,7 @@ public class Issue extends Resource {
                     + key, ex);
         }
 
+        workLogs = Field.getWorkLogs(obj, restclient);
         return Field.getWorkLogs(obj, restclient);
     }
 
