@@ -537,6 +537,7 @@ public class Issue extends Resource {
         private RestClient restclient;
         private Issue nextIssue;
         private Integer maxResults = -1;
+        private String resourcePath;
         private String jql;
         private String includedFields;
         private String expandFields;
@@ -544,10 +545,11 @@ public class Issue extends Resource {
         private List<Issue> issues;
         private int total;
         
-        public IssueIterator(RestClient restclient, String jql, String includedFields,
+        public IssueIterator(RestClient restclient, String resourcePath, String jql, String includedFields,
                              String expandFields, Integer maxResults, Integer startAt)
                              throws JiraException {
             this.restclient = restclient;
+            this.resourcePath = resourcePath;
             this.jql = jql;
             this.includedFields = includedFields;
             this.expandFields = expandFields;
@@ -634,7 +636,7 @@ public class Issue extends Resource {
             JSON result = null;
 
             try {
-                URI searchUri = createSearchURI(restclient, jql, includedFields,
+                URI searchUri = createSearchURI(restclient, resourcePath, jql, includedFields,
                         expandFields, maxResults, startAt);
                 result = restclient.get(searchUri);
             } catch (Exception ex) {
@@ -677,11 +679,12 @@ public class Issue extends Resource {
         public List<Issue> issues = null;
         private IssueIterator issueIterator;
 
-        public SearchResult(RestClient restclient, String jql, String includedFields, 
+        public SearchResult(RestClient restclient, String resourcePath, String jql, String includedFields,
                             String expandFields, Integer maxResults, Integer startAt)
                             throws JiraException {
             this.issueIterator = new IssueIterator(
                 restclient,
+                resourcePath,
                 jql,
                 includedFields,
                 expandFields,
@@ -798,7 +801,7 @@ public class Issue extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Issue(RestClient restclient, JSONObject json) {
+    public Issue(RestClient restclient, JSONObject json) {
         super(restclient);
 
         if (json != null)
@@ -1293,6 +1296,8 @@ public class Issue extends Resource {
      *
      * @param restclient REST client instance
      *
+     * @param resourcePath Path to issues resource
+     *
      * @param jql JQL statement
      *
      * @param includedFields Specifies which issue fields will be included in
@@ -1317,12 +1322,13 @@ public class Issue extends Resource {
      *
      * @throws JiraException when the search fails
      */
-    public static SearchResult search(RestClient restclient, String jql,
+    public static SearchResult search(RestClient restclient, String resourcePath, String jql,
             String includedFields, String expandFields, Integer maxResults,
             Integer startAt) throws JiraException {
 
         return new SearchResult(
             restclient,
+            resourcePath,
             jql,
             includedFields,
             expandFields,
@@ -1335,6 +1341,7 @@ public class Issue extends Resource {
      * Creates the URI to execute a jql search.
      * 
      * @param restclient
+     * @param resourcePath
      * @param jql
      * @param includedFields
      * @param expandFields
@@ -1343,11 +1350,13 @@ public class Issue extends Resource {
      * @return the URI to execute a jql search.
      * @throws URISyntaxException
      */
-    private static URI createSearchURI(RestClient restclient, String jql,
+    private static URI createSearchURI(RestClient restclient, String resourcePath, String jql,
             String includedFields, String expandFields, Integer maxResults,
             Integer startAt) throws URISyntaxException {
         Map<String, String> queryParams = new HashMap<String, String>();
-        queryParams.put("jql", jql);
+        if (jql != null) {
+            queryParams.put("jql", jql);
+        }
         if(maxResults != null){
             queryParams.put("maxResults", String.valueOf(maxResults));
         }
@@ -1361,8 +1370,8 @@ public class Issue extends Resource {
             queryParams.put("startAt", String.valueOf(startAt));
         }
 
-        URI searchUri = restclient.buildURI(getBaseUri() + "search", queryParams);
-        return searchUri;
+        return resourcePath == null ? restclient.buildURI(getBaseUri() + "search", queryParams)
+                : restclient.buildURI(resourcePath, queryParams);
     }
 
     /**
@@ -1642,6 +1651,7 @@ public class Issue extends Resource {
                     + key, ex);
         }
 
+        workLogs = Field.getWorkLogs(obj, restclient);
         return Field.getWorkLogs(obj, restclient);
     }
 
