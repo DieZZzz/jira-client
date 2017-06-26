@@ -584,6 +584,16 @@ public class JiraClient {
     public Map<String, List<String>> getProjectStatuses(String key) throws JiraException {
         return Project.getIssueTypesWithStatuses(restclient, key);
     }
+
+    /**
+     * Return LinkType of specified project
+     * @param key project key
+     * @return all project Issue link types
+     * @throws JiraException
+     */
+    public List<LinkType> getIssueLinkTypes(String key) throws JiraException {
+        return Project.getIssueLinkTypes(restclient, key);
+    }
     
     /**
      * Obtains the list of all issue types in Jira.
