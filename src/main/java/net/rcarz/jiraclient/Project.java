@@ -133,6 +133,23 @@ public class Project extends Resource {
     }
 
     /**
+     *
+     * @param restclient REST client instance
+     * @param key project key
+     * @return all project IssueLink of the specified project
+     * @throws JiraException
+     */
+    public static List<LinkType> getIssueLinkTypes(RestClient restclient, String key) throws JiraException {
+        try {
+            URI uri = restclient.buildURI(Resource.getBaseUri() + "issueLinkType");
+            JSON response = restclient.get(uri);
+            return Field.getResourceArray(LinkType.class, ((JSONObject) response).get("issueLinkTypes"), restclient);
+        } catch (Exception ex) {
+            throw new JiraException(ex.getMessage(), ex);
+        }
+    }
+
+    /**
      * Retrieves all project records visible to the session user.
      *
      * @param restclient REST client instance
