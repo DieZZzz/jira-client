@@ -568,6 +568,22 @@ public final class Field {
     }
 
     /**
+     * Gets a jira field schema object from the given object.
+     *
+     * @param schema a JSONObject instance
+     *
+     * @return a JiraFieldSchema instance or null if schema isn't a JSONObject instance
+     */
+    public static JiraFieldSchema getFieldSchema(Object schema) {
+        JiraFieldSchema result = null;
+
+        if (schema instanceof JSONObject && !((JSONObject)schema).isNullObject())
+            result = new JiraFieldSchema((JSONObject)schema);
+
+        return result;
+    }
+
+    /**
      * Extracts field metadata from an editmeta JSON object.
      *
      * @param name Field name

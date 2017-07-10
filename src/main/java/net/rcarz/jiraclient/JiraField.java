@@ -11,8 +11,6 @@ import java.util.Map;
 
 /**
  * Represents Jira Field (both system and custom)
- *
- * TODO: add "schema" field
  */
 public class JiraField {
 
@@ -24,6 +22,7 @@ public class JiraField {
     private Boolean navigable = null;
     private Boolean searchable = null;
     private List<String> clauseNames = null;
+    private JiraFieldSchema schema = null;
 
     public JiraField(JSONObject json) {
         if (json != null)
@@ -41,6 +40,7 @@ public class JiraField {
         navigable = Field.getBoolean(map.get("navigable"));
         searchable = Field.getBoolean(map.get("searchable"));
         clauseNames = Field.getStringArray(map.get("clauseNames"));
+        schema = Field.getFieldSchema(map.get("schema"));
     }
 
     /**
@@ -110,5 +110,9 @@ public class JiraField {
 
     public List<String> getClauseNames() {
         return clauseNames;
+    }
+
+    public JiraFieldSchema getSchema() {
+        return schema;
     }
 }
