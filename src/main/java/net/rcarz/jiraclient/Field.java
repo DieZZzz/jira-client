@@ -442,6 +442,8 @@ public final class Field {
                 result = (T)new Watches(restclient, (JSONObject)r);
             else if (type == WorkLog.class)
                 result = (T)new WorkLog(restclient, (JSONObject)r);
+            else if (type == StatusCategory.class)
+                result = (T)new StatusCategory(restclient, (JSONObject)r);
         }
 
         return result;

@@ -19,8 +19,6 @@
 
 package net.rcarz.jiraclient;
 
-import java.util.Map;
-
 import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 
@@ -29,9 +27,10 @@ import net.sf.json.JSONObject;
  */
 public class Status extends Resource {
 
-    private String description = null;
-    private String iconUrl = null;
-    private String name = null;
+    private String description;
+    private String iconUrl;
+    private String name;
+    private StatusCategory statusCategory;
 
     /**
      * Creates a status from a JSON payload.
@@ -47,13 +46,13 @@ public class Status extends Resource {
     }
 
     private void deserialise(JSONObject json) {
-        Map map = json;
 
-        self = Field.getString(map.get("self"));
-        id = Field.getString(map.get("id"));
-        description = Field.getString(map.get("description"));
-        iconUrl = Field.getString(map.get("iconUrl"));
-        name = Field.getString(map.get("name"));
+        self = Field.getString(json.get("self"));
+        id = Field.getString(json.get("id"));
+        description = Field.getString(json.get("description"));
+        iconUrl = Field.getString(json.get("iconUrl"));
+        name = Field.getString(json.get("name"));
+        statusCategory = Field.getResource(StatusCategory.class, json.get( "statusCategory" ), restclient);
     }
 
     /**
@@ -98,6 +97,10 @@ public class Status extends Resource {
 
     public String getIconUrl() {
         return iconUrl;
+    }
+
+    public StatusCategory getStatusCategory(){
+        return statusCategory;
     }
 }
 
