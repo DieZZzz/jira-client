@@ -1,6 +1,7 @@
 package net.rcarz.jiraclient;
 
 import net.sf.json.JSONObject;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -15,6 +16,7 @@ import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(JSONObject.class)
+@Ignore
 public class VersionTest {
 
     @Test

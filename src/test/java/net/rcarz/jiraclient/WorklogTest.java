@@ -1,6 +1,7 @@
 package net.rcarz.jiraclient;
 
 import net.sf.json.JSONObject;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -15,6 +16,7 @@ import static junit.framework.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 
 @RunWith(PowerMockRunner.class)
+@Ignore
 public class WorklogTest {
 
     private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
