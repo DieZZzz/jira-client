@@ -594,7 +594,7 @@ public class JiraClient {
     public List<LinkType> getIssueLinkTypes(String key) throws JiraException {
         return Project.getIssueLinkTypes(restclient, key);
     }
-    
+
     /**
      * Obtains the list of all issue types in Jira.
      * @return all issue types
@@ -615,6 +615,24 @@ public class JiraClient {
             return issueTypes;
         } catch (Exception ex) {
             throw new JiraException(ex.getMessage(), ex);
+        }
+    }
+
+    public List<Status> getIssueStatuses() throws JiraException {
+        try {
+            URI uri = this.restclient.buildURI(Resource.getBaseUri() + "status");
+            JSON response = this.restclient.get(uri);
+            JSONArray statusesArray = JSONArray.fromObject(response);
+            List<Status> statuses = new ArrayList(statusesArray.size());
+
+            for(int i = 0; i < statusesArray.size(); ++i) {
+                JSONObject it = statusesArray.getJSONObject(i);
+                statuses.add(new Status(this.restclient, it));
+            }
+
+            return statuses;
+        } catch (Exception var7) {
+            throw new JiraException(var7.getMessage(), var7);
         }
     }
     
