@@ -47,7 +47,7 @@ public class JiraClient {
      * Creates a JIRA client.
      *
      * @param uri Base URI of the JIRA server
-     * @throws JiraException 
+     * @throws JiraException
      */
     public JiraClient(String uri) throws JiraException {
         this(null, uri, null);
@@ -58,19 +58,19 @@ public class JiraClient {
      *
      * @param uri Base URI of the JIRA server
      * @param creds Credentials to authenticate with
-     * @throws JiraException 
+     * @throws JiraException
      */
     public JiraClient(String uri, ICredentials creds) throws JiraException {
         this(null, uri, creds);
     }
-    
+
     /**
      * Creates an authenticated JIRA client with custom HttpClient.
      *
      * @param httpClient Custom HttpClient to be used
      * @param uri Base URI of the JIRA server
      * @param creds Credentials to authenticate with
-     * @throws JiraException 
+     * @throws JiraException
      */
     public JiraClient(HttpClient httpClient, String uri, ICredentials creds) throws JiraException {
         if (httpClient == null) {
@@ -166,7 +166,7 @@ public class JiraClient {
      * <li>summary,comment - include just the summary and comments</li>
      * <li>*all,-comment - include all fields</li>
      * </ul>
-     * 
+     *
      * @param expand issue fields to expand when getting issue data
      *
      * @return an issue instance
@@ -278,7 +278,7 @@ public class JiraClient {
 
         return searchIssues(jql, includedFields, expandFields, null, null);
     }
-    
+
     /**
      * Search for issues with the given query and specify which fields to
      * retrieve.
@@ -324,10 +324,10 @@ public class JiraClient {
      * <li>summary,comment - include just the summary and comments</li>
      * <li>*all,-comment - include all fields</li>
      * </ul>
-     * 
+     *
      * @param maxResults if non-<code>null</code>, defines the maximum number of
-     * results that can be returned 
-     * 
+     * results that can be returned
+     *
      * @param startAt if non-<code>null</code>, defines the first issue to
      * return
      *
@@ -382,7 +382,57 @@ public class JiraClient {
             includedFields,
             expandFields,
             maxResults,
-            startAt
+            startAt,
+            null
+        );
+    }
+
+    /**
+     * Search for issues with the given query and specify which fields to
+     * retrieve. If the total results is bigger than the maximum returned
+     * results, then further calls can be made using different values for
+     * the <code>startAt</code> field to obtain all the results.
+     *
+     * @param jql JQL statement
+     *
+     * @param includedFields Specifies which issue fields will be included in
+     * the result.
+     * <br>Some examples how this parameter works:
+     * <ul>
+     * <li>*all - include all fields</li>
+     * <li>*navigable - include just navigable fields</li>
+     * <li>summary,comment - include just the summary and comments</li>
+     * <li>*all,-comment - include all fields</li>
+     * </ul>
+     *
+     * @param expandFields Specifies with issue fields should be expanded
+     *
+     * @param maxResults if non-<code>null</code>, defines the maximum number of
+     * results that can be returned
+     *
+     * @param startAt if non-<code>null</code>, defines the first issue to
+     * return
+     *
+     * @param jqlValidateParameter determines how to validate the JQL query and treat the validation
+     * results
+     *
+     * @return a search result structure with results
+     *
+     * @throws JiraException when the search fails
+     */
+    public Issue.SearchResult searchIssues(String jql, String includedFields,
+        String expandFields, Integer maxResults,
+        Integer startAt, JqlValidateParameter jqlValidateParameter) throws JiraException {
+
+        return Issue.search(
+            restclient,
+            null,
+            jql,
+            includedFields,
+            expandFields,
+            maxResults,
+            startAt,
+            jqlValidateParameter
         );
     }
 
@@ -428,8 +478,99 @@ public class JiraClient {
                 includedFields,
                 expandFields,
                 maxResults,
-                startAt
+                startAt,
+            null
         );
+    }
+
+    /**
+     * Search for issues with the given query and specify which fields to
+     * retrieve. If the total results is bigger than the maximum returned
+     * results, then further calls can be made using different values for
+     * the <code>startAt</code> field to obtain all the results.
+     *
+     * @param resourcePath Path to Issue resource. For example, you can load Issues from agile board.
+     *
+     * @param jql JQL statement
+     *
+     * @param includedFields Specifies which issue fields will be included in
+     * the result.
+     * <br>Some examples how this parameter works:
+     * <ul>
+     * <li>*all - include all fields</li>
+     * <li>*navigable - include just navigable fields</li>
+     * <li>summary,comment - include just the summary and comments</li>
+     * <li>*all,-comment - include all fields</li>
+     * </ul>
+     *
+     * @param expandFields Specifies with issue fields should be expanded
+     *
+     * @param maxResults if non-<code>null</code>, defines the maximum number of
+     * results that can be returned
+     *
+     * @param startAt if non-<code>null</code>, defines the first issue to
+     * return
+     *
+     * @param jqlValidateParameter determines how to validate the JQL query and treat the validation
+     * results
+     *
+     * @return a search result structure with results
+     *
+     * @throws JiraException when the search fails
+     */
+    public Issue.SearchResult searchIssues(String resourcePath, String jql, String includedFields,
+        String expandFields, Integer maxResults,
+        Integer startAt, JqlValidateParameter jqlValidateParameter) throws JiraException {
+        return Issue.search(
+            restclient,
+            resourcePath,
+            jql,
+            includedFields,
+            expandFields,
+            maxResults,
+            startAt,
+            jqlValidateParameter
+        );
+    }
+
+
+    /**
+     * Represents possible values for 'validateQuery' parameter when performing jql issues search.
+     * @see <a href="https://developer.atlassian.com/cloud/jira/platform/rest/v3/#api-rest-api-3-search-get">Jira rest api doc</a>
+     */
+    public enum JqlValidateParameter {
+
+        /**
+         * Returns a 400 response code if any errors are found,
+         * along with a list of all errors (and warnings).
+         *
+         */
+        STRICT("strict"),
+
+        /**
+         * Returns all errors as warnings.
+         */
+        WARN("warn"),
+
+        /**
+         * No validation is performed.
+         */
+        NONE("none"),
+        /**
+         * Deprecated A legacy synonym for strict.
+         */
+        TRUE("true"),
+        /**
+         * Deprecated A legacy synonym for warn.
+         */
+        FALSE("strict"),
+        ;
+
+        public final String value;
+
+        JqlValidateParameter(String value) {
+            this.value = value;
+        }
     }
 
     /**
@@ -557,7 +698,7 @@ public class JiraClient {
             throw new JiraException(ex.getMessage(), ex);
         }
     }
-    
+
     /**
      * Obtains information about a project, given its project key.
      * @param key the project key
@@ -635,7 +776,7 @@ public class JiraClient {
             throw new JiraException(var7.getMessage(), var7);
         }
     }
-    
+
     /**
      * Creates a new component in the given project.
      *
@@ -646,20 +787,20 @@ public class JiraClient {
     public Component.FluentCreate createComponent(String project) {
         return Component.create(restclient, project);
     }
-    
+
     /**
      * Obtains a component given its ID.
-     * 
+     *
      * @param id the component ID
-     * 
+     *
      * @return the component
-     * 
+     *
      * @throws JiraException failed to obtain the component
      */
     public Component getComponent(String id) throws JiraException {
         return Component.get(restclient, id);
     }
-    
+
     public ArrayList<IssueHistory> filterChangeLog(List<IssueHistory> histoy,String fields) {
         ArrayList<IssueHistory> result = new ArrayList<IssueHistory>(histoy.size());
         fields = "," + fields + ",";
@@ -705,8 +846,8 @@ public class JiraClient {
                 } else {
                     response = getNextPortion(issue,changes.size());
                 }
-            } 
-           
+            }
+
             return changes;
         } catch (Exception ex) {
             throw new JiraException(ex.getMessage(), ex);

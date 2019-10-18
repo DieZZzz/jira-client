@@ -25,6 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import net.rcarz.jiraclient.JiraClient.JqlValidateParameter;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -533,6 +534,7 @@ public class Issue extends Resource {
      * issues when the iterator reaches the last of the current page.
      */
     private static class IssueIterator implements Iterator<Issue> {
+
         private Iterator<Issue> currentPage;
         private RestClient restclient;
         private Issue nextIssue;
@@ -544,9 +546,12 @@ public class Issue extends Resource {
         private Integer startAt;
         private List<Issue> issues;
         private int total;
-        
-        public IssueIterator(RestClient restclient, String resourcePath, String jql, String includedFields,
-                             String expandFields, Integer maxResults, Integer startAt)
+        private JqlValidateParameter jqlValidateParameter;
+
+        public IssueIterator(RestClient restclient, String resourcePath, String jql,
+            String includedFields,
+            String expandFields, Integer maxResults, Integer startAt,
+            JqlValidateParameter jqlValidateParameter)
                              throws JiraException {
             this.restclient = restclient;
             this.resourcePath = resourcePath;
@@ -555,6 +560,7 @@ public class Issue extends Resource {
             this.expandFields = expandFields;
             this.maxResults = maxResults;
             this.startAt = startAt;
+            this.jqlValidateParameter = jqlValidateParameter;
         }
         
         @Override
@@ -637,7 +643,7 @@ public class Issue extends Resource {
 
             try {
                 URI searchUri = createSearchURI(restclient, resourcePath, jql, includedFields,
-                        expandFields, maxResults, startAt);
+                        expandFields, maxResults, startAt, jqlValidateParameter);
                 result = restclient.get(searchUri);
             } catch (Exception ex) {
                 throw new JiraException("Failed to search issues", ex);
@@ -679,8 +685,10 @@ public class Issue extends Resource {
         public List<Issue> issues = null;
         private IssueIterator issueIterator;
 
-        public SearchResult(RestClient restclient, String resourcePath, String jql, String includedFields,
-                            String expandFields, Integer maxResults, Integer startAt)
+        public SearchResult(RestClient restclient, String resourcePath, String jql,
+            String includedFields,
+            String expandFields, Integer maxResults, Integer startAt,
+            JqlValidateParameter validateParameter)
                             throws JiraException {
             this.issueIterator = new IssueIterator(
                 restclient,
@@ -689,7 +697,8 @@ public class Issue extends Resource {
                 includedFields,
                 expandFields,
                 maxResults,
-                startAt
+                startAt,
+                validateParameter
             );
             /* backwards compatibility shim - first page only */
             this.issueIterator.hasNext();
@@ -1318,13 +1327,15 @@ public class Issue extends Resource {
      *
      * @param expandFields fields to expand when obtaining the issue
      *
+     * @param validateParameter query validation type
+     *
      * @return a search result structure with results
      *
      * @throws JiraException when the search fails
      */
     public static SearchResult search(RestClient restclient, String resourcePath, String jql,
             String includedFields, String expandFields, Integer maxResults,
-            Integer startAt) throws JiraException {
+            Integer startAt, JqlValidateParameter validateParameter) throws JiraException {
 
         return new SearchResult(
             restclient,
@@ -1333,7 +1344,8 @@ public class Issue extends Resource {
             includedFields,
             expandFields,
             maxResults,
-            startAt
+            startAt,
+            validateParameter
         );
     }
 
@@ -1347,12 +1359,13 @@ public class Issue extends Resource {
      * @param expandFields
      * @param maxResults
      * @param startAt
+     * @param jqlValidateParameter
      * @return the URI to execute a jql search.
      * @throws URISyntaxException
      */
     private static URI createSearchURI(RestClient restclient, String resourcePath, String jql,
             String includedFields, String expandFields, Integer maxResults,
-            Integer startAt) throws URISyntaxException {
+            Integer startAt, JqlValidateParameter jqlValidateParameter) throws URISyntaxException {
         Map<String, String> queryParams = new HashMap<String, String>();
         if (jql != null) {
             queryParams.put("jql", jql);
@@ -1368,6 +1381,9 @@ public class Issue extends Resource {
         }
         if (startAt != null) {
             queryParams.put("startAt", String.valueOf(startAt));
+        }
+        if (jqlValidateParameter != null) {
+            queryParams.put("validateQuery", jqlValidateParameter.value);
         }
 
         return resourcePath == null ? restclient.buildURI(getBaseUri() + "search", queryParams)
