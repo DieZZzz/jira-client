@@ -563,7 +563,7 @@ public class JiraClient {
         /**
          * Deprecated A legacy synonym for warn.
          */
-        FALSE("strict"),
+        FALSE("false"),
         ;
 
         public final String value;
