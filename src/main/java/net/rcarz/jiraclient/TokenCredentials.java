@@ -19,10 +19,11 @@
 
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
+import net.rcarz.jiraclient.util.JsonUtil;
 import net.sf.json.JSONObject;
-
 import org.apache.http.HttpRequest;
+
+import java.util.Map;
 
 /**
  * Basic HTTP authentication credentials.
@@ -75,10 +76,14 @@ public class TokenCredentials implements ICredentials {
                 JSONObject req = new JSONObject();
                 req.put("username", username);
                 req.put("password", password);
-                JSON json = client.post(Resource.getAuthUri() + "session", req);
-                if (json instanceof JSONObject) {
-	                JSONObject jso = (JSONObject) json;
-	                jso = (JSONObject) jso.get("session");
+                String resultJson = client.post(Resource.getAuthUri() + "session", req);
+                Map result = null;
+                if (resultJson!=null) {
+                    result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+                }
+                if (result != null) {
+	                Map jso = result;
+	                jso = (Map) jso.get("session");
 	                cookieName = (String)jso.get("name");
 	                token = (String)jso.get("value");
 	                

@@ -1,7 +1,5 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSONObject;
-
 import java.util.Map;
 
 /**
@@ -20,7 +18,7 @@ public class JiraFieldSchema {
      *
      * @param json JSON payload
      */
-    protected JiraFieldSchema(JSONObject json) {
+    protected JiraFieldSchema(Map json) {
         Map<?, ?> map = json;
 
         type = Field.getString(map.get("type"));

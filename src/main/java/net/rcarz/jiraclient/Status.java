@@ -19,13 +19,17 @@
 
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import net.rcarz.jiraclient.util.JsonUtil;
+
+import java.util.Map;
 
 /**
  * Represents an issue status.
  */
 public class Status extends Resource {
+
+    public Status() {
+    }
 
     private String description;
     private String iconUrl;
@@ -38,14 +42,14 @@ public class Status extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Status(RestClient restclient, JSONObject json) {
+    protected Status(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
 
         self = Field.getString(json.get("self"));
         id = Field.getString(json.get("id"));
@@ -68,18 +72,21 @@ public class Status extends Resource {
     public static Status get(RestClient restclient, String id)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "status/" + id);
+            String resultJson = restclient.get(getBaseUri() + "status/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve status " + id, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new Status(restclient, (JSONObject)result);
+        return new Status(restclient, result);
     }
 
     @Override

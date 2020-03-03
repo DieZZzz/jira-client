@@ -22,9 +22,9 @@ package net.rcarz.jiraclient.agile;
 import net.rcarz.jiraclient.Field;
 import net.rcarz.jiraclient.JiraException;
 import net.rcarz.jiraclient.RestClient;
-import net.sf.json.JSONObject;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents an Agile Epic.
@@ -44,7 +44,7 @@ public class Epic extends AgileResource {
      * @param restclient REST client instance
      * @param json       JSON payload
      */
-    public Epic(RestClient restclient, JSONObject json) throws JiraException {
+    public Epic(RestClient restclient, Map json) throws JiraException {
         super(restclient, json);
     }
 
@@ -87,7 +87,7 @@ public class Epic extends AgileResource {
      * @param json The JSON object to read.
      */
     @Override
-    void deserialize(JSONObject json) throws JiraException {
+    void deserialize(Map json) throws JiraException {
         super.deserialize(json);
 
         this.key = Field.getString(json.get("key"));

@@ -19,13 +19,15 @@
 
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSONObject;
 import java.util.Map;
 
 /**
  * Represents an issue priority.
  */
 public class Transition extends Resource {
+
+    public Transition() {
+    }
 
     private String name = null;
     private Status toStatus = null;
@@ -37,14 +39,14 @@ public class Transition extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Transition(RestClient restclient, JSONObject json) {
+    protected Transition(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));

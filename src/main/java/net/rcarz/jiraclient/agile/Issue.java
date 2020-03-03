@@ -22,10 +22,10 @@ package net.rcarz.jiraclient.agile;
 import net.rcarz.jiraclient.Field;
 import net.rcarz.jiraclient.JiraException;
 import net.rcarz.jiraclient.RestClient;
-import net.sf.json.JSONObject;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents an Agile Issue.
@@ -62,7 +62,7 @@ public class Issue extends AgileResource {
      * @param restclient REST client instance
      * @param json       JSON payload
      */
-    public Issue(RestClient restclient, JSONObject json) throws JiraException {
+    public Issue(RestClient restclient, Map json) throws JiraException {
         super(restclient, json);
     }
 
@@ -91,13 +91,13 @@ public class Issue extends AgileResource {
     }
 
     @Override
-    protected void deserialize(JSONObject json) throws JiraException {
+    protected void deserialize(Map json) throws JiraException {
         super.deserialize(json);
         this.key = Field.getString(json.get("key"));
 
         // Extract from Field sub JSONObject
         if (json.containsKey("fields")) {
-            JSONObject fields = (JSONObject) json.get("fields");
+            Map fields = (Map) json.get("fields");
             setName(Field.getString(fields.get("summary")));
             this.flagged = Field.getBoolean(fields.get("flagged"));
             this.sprint = getSubResource(Sprint.class, fields, "sprint");

@@ -19,18 +19,14 @@
 
 package net.rcarz.jiraclient;
 
+import net.sf.json.JSONNull;
+import net.sf.json.JSONObject;
+import org.apache.commons.collections.MapUtils;
+
 import java.sql.Timestamp;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import net.sf.json.JSONArray;
-import net.sf.json.JSONNull;
-import net.sf.json.JSONObject;
+import java.util.*;
 
 /**
  * Utility functions for translating between JSON and fields.
@@ -184,7 +180,7 @@ public final class Field {
                                             String issueKey) {
         List<Comment> results = new ArrayList<Comment>();
 
-        if (c instanceof JSONObject && !((JSONObject)c).isNullObject()) {
+        if (c instanceof Map) {
             results = getResourceArray(
                     Comment.class,
                     ((Map)c).get("comments"),
@@ -207,7 +203,7 @@ public final class Field {
     public static List<WorkLog> getWorkLogs(Object c, RestClient restclient) {
         List<WorkLog> results = new ArrayList<WorkLog>();
 
-        if (c instanceof JSONObject && !((JSONObject)c).isNullObject())
+        if (c instanceof Map)
             results = getResourceArray(WorkLog.class, ((Map)c).get("worklogs"), restclient);
 
         return results;
@@ -224,7 +220,7 @@ public final class Field {
     public static List<RemoteLink> getRemoteLinks(Object c, RestClient restclient) {
         List<RemoteLink> results = new ArrayList<RemoteLink>();
 
-        if (c instanceof JSONArray)
+        if (c instanceof List)
             results = getResourceArray(RemoteLink.class, c, restclient);
 
         return results;
@@ -353,7 +349,7 @@ public final class Field {
 
         Map<TK, TV> result = new HashMap<TK, TV>();
 
-        if (m instanceof JSONObject && !((JSONObject)m).isNullObject()) {
+        if (m instanceof Map) {
             for (Object k : ((Map)m).keySet()) {
                 Object v = ((Map)m).get(k);
 
@@ -395,55 +391,55 @@ public final class Field {
 
         T result = null;
 
-        if (r instanceof JSONObject && !((JSONObject)r).isNullObject()) {
-            if (type == Attachment.class)
-                result = (T)new Attachment(restclient, (JSONObject)r);
-            else if (type == ChangeLog.class)
-                result = (T)new ChangeLog(restclient, (JSONObject)r);
-            else if (type == ChangeLogEntry.class)
-                result = (T)new ChangeLogEntry(restclient, (JSONObject)r);
-            else if (type == ChangeLogItem.class)
-                result = (T)new ChangeLogItem(restclient, (JSONObject)r);
-            else if (type == Comment.class)
-                result = (T)new Comment(restclient, (JSONObject)r, parentId);
-            else if (type == Component.class)
-                result = (T)new Component(restclient, (JSONObject)r);
-            else if (type == CustomFieldOption.class)
-                result = (T)new CustomFieldOption(restclient, (JSONObject)r);
-            else if (type == Issue.class)
-                result = (T)new Issue(restclient, (JSONObject)r);
-            else if (type == IssueLink.class)
-                result = (T)new IssueLink(restclient, (JSONObject)r);
-            else if (type == IssueType.class)
-                result = (T)new IssueType(restclient, (JSONObject)r);
-            else if (type == LinkType.class)
-                result = (T)new LinkType(restclient, (JSONObject)r);
-            else if (type == Priority.class)
-                result = (T)new Priority(restclient, (JSONObject)r);
-            else if (type == Project.class)
-                result = (T)new Project(restclient, (JSONObject)r);
-            else if (type == ProjectCategory.class)
-                result = (T)new ProjectCategory(restclient, (JSONObject)r);
-            else if (type == RemoteLink.class)
-                result = (T)new RemoteLink(restclient, (JSONObject)r);
-            else if (type == Resolution.class)
-                result = (T)new Resolution(restclient, (JSONObject)r);
-            else if (type == Status.class)
-                result = (T)new Status(restclient, (JSONObject)r);
-            else if (type == Transition.class)
-                result = (T)new Transition(restclient, (JSONObject)r);
-            else if (type == User.class)
-                result = (T)new User(restclient, (JSONObject)r);
-            else if (type == Version.class)
-                result = (T)new Version(restclient, (JSONObject)r);
-            else if (type == Votes.class)
-                result = (T)new Votes(restclient, (JSONObject)r);
-            else if (type == Watches.class)
-                result = (T)new Watches(restclient, (JSONObject)r);
-            else if (type == WorkLog.class)
-                result = (T)new WorkLog(restclient, (JSONObject)r);
-            else if (type == StatusCategory.class)
-                result = (T)new StatusCategory(restclient, (JSONObject)r);
+        if (r instanceof Map && ((MapUtils.isNotEmpty((Map) r)))) {
+            if (type==Attachment.class)
+                result = (T) new Attachment(restclient, (Map) r);
+            else if (type==ChangeLog.class)
+                result = (T) new ChangeLog(restclient, (Map) r);
+            else if (type==ChangeLogEntry.class)
+                result = (T) new ChangeLogEntry(restclient, (Map) r);
+            else if (type==ChangeLogItem.class)
+                result = (T) new ChangeLogItem(restclient, (Map) r);
+            else if (type==Comment.class)
+                result = (T) new Comment(restclient, (Map) r, parentId);
+            else if (type==Component.class)
+                result = (T) new Component(restclient, (Map) r);
+            else if (type==CustomFieldOption.class)
+                result = (T) new CustomFieldOption(restclient, (Map) r);
+            else if (type==Issue.class)
+                result = (T) new Issue(restclient, (Map) r);
+            else if (type==IssueLink.class)
+                result = (T) new IssueLink(restclient, (Map) r);
+            else if (type==IssueType.class)
+                result = (T) new IssueType(restclient, (Map) r);
+            else if (type==LinkType.class)
+                result = (T) new LinkType(restclient, (Map) r);
+            else if (type==Priority.class)
+                result = (T) new Priority(restclient, (Map) r);
+            else if (type==Project.class)
+                result = (T) new Project(restclient, (Map) r);
+            else if (type==ProjectCategory.class)
+                result = (T) new ProjectCategory(restclient, (Map) r);
+            else if (type==RemoteLink.class)
+                result = (T) new RemoteLink(restclient, (Map) r);
+            else if (type==Resolution.class)
+                result = (T) new Resolution(restclient, (Map) r);
+            else if (type==Status.class)
+                result = (T) new Status(restclient, (Map) r);
+            else if (type==Transition.class)
+                result = (T) new Transition(restclient, (Map) r);
+            else if (type==User.class)
+                result = (T) new User(restclient, (Map) r);
+            else if (type==Version.class)
+                result = (T) new Version(restclient, (Map) r);
+            else if (type==Votes.class)
+                result = (T) new Votes(restclient, (Map) r);
+            else if (type==Watches.class)
+                result = (T) new Watches(restclient, (Map) r);
+            else if (type==WorkLog.class)
+                result = (T) new WorkLog(restclient, (Map) r);
+            else if (type==StatusCategory.class)
+                result = (T) new StatusCategory(restclient, (Map) r);
         }
 
         return result;
@@ -475,8 +471,8 @@ public final class Field {
     public static List<String> getStringArray(Object sa) {
         List<String> results = new ArrayList<String>();
 
-        if (sa instanceof JSONArray) {
-            for (Object s : (JSONArray)sa) {
+        if (sa instanceof List) {
+            for (Object s : (List)sa) {
                 if (s instanceof String)
                     results.add((String)s);
             }
@@ -495,8 +491,8 @@ public final class Field {
     public static List<Integer> getIntegerArray(Object ia) {
         List<Integer> results = new ArrayList<Integer>();
 
-        if (ia instanceof JSONArray) {
-            for (Object i : (JSONArray)ia) {
+        if (ia instanceof List) {
+            for (Object i : (List)ia) {
                 if (i instanceof Integer)
                     results.add((Integer) i);
             }
@@ -535,8 +531,8 @@ public final class Field {
 
         List<T> results = new ArrayList<T>();
 
-        if (ra instanceof JSONArray) {
-            for (Object v : (JSONArray)ra) {
+        if (ra instanceof List) {
+            for (Object v : (List)ra) {
                 T item = null;
 
                 if (parentId != null) {
@@ -563,7 +559,7 @@ public final class Field {
     public static TimeTracking getTimeTracking(Object tt) {
         TimeTracking result = null;
 
-        if (tt instanceof JSONObject && !((JSONObject)tt).isNullObject())
+        if (tt instanceof Map)
             result = new TimeTracking((JSONObject)tt);
 
         return result;
@@ -579,8 +575,8 @@ public final class Field {
     public static JiraFieldSchema getFieldSchema(Object schema) {
         JiraFieldSchema result = null;
 
-        if (schema instanceof JSONObject && !((JSONObject)schema).isNullObject())
-            result = new JiraFieldSchema((JSONObject)schema);
+        if (schema instanceof Map)
+            result = new JiraFieldSchema(((Map) schema));
 
         return result;
     }
@@ -595,10 +591,10 @@ public final class Field {
      *
      * @throws JiraException when the field is missing or metadata is bad
      */
-    public static Meta getFieldMetadata(String name, JSONObject editmeta)
+    public static Meta getFieldMetadata(String name, Map editmeta)
             throws JiraException {
 
-        if (editmeta.isNullObject() || !editmeta.containsKey(name))
+        if (editmeta == null || !editmeta.containsKey(name))
             throw new JiraException("Field '" + name + "' does not exist or read-only");
 
         Map f = (Map)editmeta.get(name);
@@ -649,8 +645,8 @@ public final class Field {
      *
      * @return a JSON-encoded array of items
      */
-    public static JSONArray toArray(Iterable iter, String type, String custom) throws JiraException {
-        JSONArray results = new JSONArray();
+    public static List toArray(Iterable iter, String type, String custom) throws JiraException {
+        List results = new ArrayList();
 
         if (type == null)
             throw new JiraException("Array field metadata is missing item type");
@@ -669,7 +665,7 @@ public final class Field {
             if (type.equals("component") || type.equals("group") ||
                     type.equals("user") || type.equals("version")) {
 
-                JSONObject itemMap = new JSONObject();
+                Map itemMap = new LinkedHashMap<>();
 
                 if (realValue instanceof ValueTuple) {
                     ValueTuple tuple = (ValueTuple)realValue;
@@ -684,13 +680,13 @@ public final class Field {
                                     && (custom.equals("com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes") ||
                                     custom.equals("com.atlassian.jira.plugin.system.customfieldtypes:multiselect")))) {
 
-                realResult = new JSONObject();
-                ((JSONObject)realResult).put(ValueType.VALUE.toString(), realValue.toString());
+                realResult = new LinkedHashMap<>();
+                ((Map)realResult).put(ValueType.VALUE.toString(), realValue.toString());
             } else if (type.equals("string"))
                 realResult = realValue.toString();
 
             if (oper != null) {
-                JSONObject operMap = new JSONObject();
+                Map operMap = new LinkedHashMap<>();
                 operMap.put(oper.name, realResult);
                 results.add(operMap);
             } else
@@ -712,7 +708,7 @@ public final class Field {
      * @throws JiraException when a value is bad or field has invalid metadata
      * @throws UnsupportedOperationException when a field type isn't supported
      */
-    public static Object toJson(String name, Object value, JSONObject editmeta)
+    public static Object toJson(String name, Object value, Map editmeta)
             throws JiraException, UnsupportedOperationException {
 
         Meta m = getFieldMetadata(name, editmeta);

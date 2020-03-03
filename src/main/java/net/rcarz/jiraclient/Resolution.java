@@ -19,17 +19,18 @@
 
 package net.rcarz.jiraclient;
 
+import net.rcarz.jiraclient.util.JsonUtil;
+
 import java.util.List;
 import java.util.Map;
-
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
 /**
  * Represents an issue resolution.
  */
 public class Resolution extends Resource {
+
+    public Resolution() {
+    }
 
     private String description = null;
     private String name = null;
@@ -40,14 +41,14 @@ public class Resolution extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Resolution(RestClient restclient, JSONObject json) {
+    protected Resolution(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -69,18 +70,21 @@ public class Resolution extends Resource {
     public static Resolution get(RestClient restclient, String id)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "resolution/" + id);
+            String resultJson = restclient.get(getBaseUri() + "resolution/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve resolution " + id, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new Resolution(restclient, (JSONObject)result);
+        return new Resolution(restclient, result);
     }
 
     /**
@@ -93,15 +97,18 @@ public class Resolution extends Resource {
      * @throws JiraException when the retrieval fails
      */
     public static List<Resolution> get(RestClient restclient) throws JiraException {
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "resolution/");
+            String resultJson = restclient.get(getBaseUri() + "resolution/");
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve resolution list", ex);
         }
 
-        if (!(result instanceof JSONArray))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
         return Field.getResourceArray(Resolution.class, result, restclient);

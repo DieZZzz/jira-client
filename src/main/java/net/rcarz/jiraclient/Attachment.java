@@ -19,18 +19,16 @@
 
 package net.rcarz.jiraclient;
 
+import net.rcarz.jiraclient.util.JsonUtil;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.Map;
-
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
 
 /**
  * Represents an issue attachment.
@@ -44,20 +42,23 @@ public class Attachment extends Resource {
     private String mimeType = null;
     private String content = null;
 
+    public Attachment() {
+    }
+
     /**
      * Creates an attachment from a JSON payload.
      *
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Attachment(RestClient restclient, JSONObject json) {
+    protected Attachment(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -83,18 +84,18 @@ public class Attachment extends Resource {
     public static Attachment get(RestClient restclient, String id)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "attachment/" + id);
+            String resultJson = restclient.get(getBaseUri() + "attachment/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve attachment " + id, ex);
         }
 
-        if (!(result instanceof JSONObject))
-            throw new JiraException("JSON payload is malformed");
-
-        return new Attachment(restclient, (JSONObject)result);
+        return new Attachment(restclient, result);
     }
     
     /**

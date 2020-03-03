@@ -22,14 +22,11 @@ package net.rcarz.jiraclient.agile;
 import net.rcarz.jiraclient.Field;
 import net.rcarz.jiraclient.JiraException;
 import net.rcarz.jiraclient.RestClient;
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import net.rcarz.jiraclient.util.JsonUtil;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-
-import static net.rcarz.jiraclient.Resource.getBaseUri;
 
 /**
  * Represents an Agile Sprint.
@@ -50,7 +47,7 @@ public class Sprint extends AgileResource {
      * @param restclient REST client instance
      * @param json       JSON payload
      */
-    protected Sprint(RestClient restclient, JSONObject json) throws JiraException {
+    protected Sprint(RestClient restclient, Map json) throws JiraException {
         super(restclient, json);
     }
 
@@ -186,21 +183,24 @@ public class Sprint extends AgileResource {
                 startAt = startAt + sprints.size();
             }
 
-            JSON result = null;
+            Map result = null;
 
             try {
                 URI searchUri = createSearchURI(restclient, boardId, maxResults, startAt);
-                result = restclient.get(searchUri);
+                String resultJson = restclient.get(searchUri);
+                if (resultJson!=null) {
+                    result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+                }
             } catch (Exception ex) {
                 throw new JiraException("Failed to search sprints", ex);
             }
 
-            if (!(result instanceof JSONObject)) {
+            if (result == null) {
                 throw new JiraException("JSON payload is malformed");
             }
 
 
-            Map map = (Map) result;
+            Map map = result;
 
             this.startAt = Field.getInteger(map.get("startAt"));
             this.maxResults = Field.getInteger(map.get("maxResults"));
@@ -238,7 +238,7 @@ public class Sprint extends AgileResource {
     }
 
     @Override
-    protected void deserialize(JSONObject json) throws JiraException {
+    protected void deserialize(Map json) throws JiraException {
         super.deserialize(json);
         state = Field.getString(json.get("state"));
         originBoardId = getLong(json.get("originBoardId"));

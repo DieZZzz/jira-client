@@ -19,15 +19,17 @@
 
 package net.rcarz.jiraclient;
 
-import java.util.Map;
+import net.rcarz.jiraclient.util.JsonUtil;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import java.util.Map;
 
 /**
  * Represents an issue link.
  */
 public class IssueLink extends Resource {
+
+    public IssueLink() {
+    }
 
     private LinkType type = null;
     private Issue inwardIssue = null;
@@ -39,14 +41,14 @@ public class IssueLink extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected IssueLink(RestClient restclient, JSONObject json) {
+    protected IssueLink(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -83,18 +85,21 @@ public class IssueLink extends Resource {
     public static IssueLink get(RestClient restclient, String id)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "issueLink/" + id);
+            String resultJson = restclient.get(getBaseUri() + "issueLink/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve issue link " + id, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new IssueLink(restclient, (JSONObject)result);
+        return new IssueLink(restclient, result);
     }
 
     @Override

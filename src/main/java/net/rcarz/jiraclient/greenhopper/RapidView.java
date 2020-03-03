@@ -22,13 +22,10 @@ package net.rcarz.jiraclient.greenhopper;
 import net.rcarz.jiraclient.Field;
 import net.rcarz.jiraclient.JiraException;
 import net.rcarz.jiraclient.RestClient;
+import net.rcarz.jiraclient.util.JsonUtil;
 
 import java.util.List;
 import java.util.Map;
-
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
 /**
  * Represents a GreenHopper Rapid Board.
@@ -45,14 +42,14 @@ public class RapidView extends GreenHopperResource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected RapidView(RestClient restclient, JSONObject json) {
+    protected RapidView(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         id = Field.getInteger(map.get("id"));
@@ -74,18 +71,21 @@ public class RapidView extends GreenHopperResource {
     public static RapidView get(RestClient restclient, int id)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(RESOURCE_URI + "rapidview/" + id);
+            String resultJson = restclient.get(RESOURCE_URI + "rapidview/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve rapid view " + id, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new RapidView(restclient, (JSONObject)result);
+        return new RapidView(restclient, result);
     }
 
     /**
@@ -100,20 +100,23 @@ public class RapidView extends GreenHopperResource {
     public static List<RapidView> getAll(RestClient restclient)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(RESOURCE_URI + "rapidview");
+            String resultJson = restclient.get(RESOURCE_URI + "rapidview");
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve rapid views", ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        JSONObject jo = (JSONObject)result;
+        Map jo = (Map)result;
 
-        if (!jo.containsKey("views") || !(jo.get("views") instanceof JSONArray))
+        if (!jo.containsKey("views") || !(jo.get("views") instanceof List))
             throw new JiraException("Rapid View result is malformed");
 
         return GreenHopperField.getResourceArray(
@@ -131,20 +134,23 @@ public class RapidView extends GreenHopperResource {
      * @throws JiraException when the retrieval fails
      */
     public List<Sprint> getSprints() throws JiraException {
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(RESOURCE_URI + "sprintquery/" + id);
+            String resultJson = restclient.get(RESOURCE_URI + "sprintquery/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve sprints", ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        JSONObject jo = (JSONObject)result;
+        Map jo = (Map)result;
 
-        if (!jo.containsKey("sprints") || !(jo.get("sprints") instanceof JSONArray))
+        if (!jo.containsKey("sprints") || !(jo.get("sprints") instanceof Map))
             throw new JiraException("Sprints result is malformed");
 
         return GreenHopperField.getResourceArray(

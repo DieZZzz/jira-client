@@ -19,8 +19,7 @@
 
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import net.rcarz.jiraclient.util.JsonUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,13 +35,16 @@ public class User extends Resource {
     private String email = null;
     private String name = null;
 
+    public User() {
+    }
+
     /**
      * Creates a user from a JSON payload.
      *
      * @param restclient REST client instance
      * @param json       JSON payload
      */
-    protected User(RestClient restclient, JSONObject json) {
+    protected User(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
@@ -60,24 +62,27 @@ public class User extends Resource {
     public static User get(RestClient restclient, String username)
             throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         Map<String, String> params = new HashMap<String, String>();
         params.put("username", username);
 
         try {
-            result = restclient.get(getBaseUri() + "user", params);
+            String resultJson = restclient.get(getBaseUri() + "user", params);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve user " + username, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new User(restclient, (JSONObject) result);
+        return new User(restclient, result);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));

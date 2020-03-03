@@ -19,7 +19,7 @@
 
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
+import net.rcarz.jiraclient.util.JsonUtil;
 import net.sf.json.JSONObject;
 
 import java.text.DateFormat;
@@ -31,6 +31,8 @@ import java.util.Map;
  * Represents a product version.
  */
 public class Version extends Resource {
+    public Version() {
+    }
 
     /**
      * Used to chain fields to a create action.
@@ -127,20 +129,23 @@ public class Version extends Resource {
          * @throws JiraException when the create fails
          */
         public Version execute() throws JiraException {
-            JSON result = null;
+            Map result = null;
 
             try {
-                result = restclient.post(getRestUri(null), req);
+                String resultJson = restclient.post(getRestUri(null), req);
+                if (resultJson!=null) {
+                    result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+                }
             } catch (Exception ex) {
                 throw new JiraException("Failed to create version", ex);
             }
 
-            if (!(result instanceof JSONObject) || !((JSONObject) result).containsKey("id")
-                    || !(((JSONObject) result).get("id") instanceof String)) {
+            if (result == null || !result.containsKey("id")
+                    || !(result.get("id") instanceof String)) {
                 throw new JiraException("Unexpected result on create version");
             }
 
-            return new Version(restclient, (JSONObject) result);
+            return new Version(restclient, result);
         }
     }
 
@@ -157,7 +162,7 @@ public class Version extends Resource {
      * @param restclient REST client instance
      * @param json       JSON payload
      */
-    protected Version(RestClient restclient, JSONObject json) {
+    protected Version(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
@@ -223,21 +228,24 @@ public class Version extends Resource {
     public static Version get(RestClient restclient, String id)
             throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "version/" + id);
+            String resultJson = restclient.get(getBaseUri() + "version/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve version " + id, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new Version(restclient, (JSONObject) result);
+        return new Version(restclient, result);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));

@@ -22,14 +22,14 @@ package net.rcarz.jiraclient.agile;
 import net.rcarz.jiraclient.Field;
 import net.rcarz.jiraclient.JiraException;
 import net.rcarz.jiraclient.RestClient;
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import net.rcarz.jiraclient.util.JsonUtil;
 import org.apache.commons.lang.math.NumberUtils;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A base class for Agile resources.
@@ -49,7 +49,7 @@ public abstract class AgileResource {
     private long id = 0;
     private String name;
     private String self;
-    private JSONObject attributes = new JSONObject();
+    private Map attributes = new LinkedHashMap();
 
     /**
      * Creates a new Agile resource.
@@ -58,7 +58,7 @@ public abstract class AgileResource {
      * @param json       JSON payload
      * @throws JiraException when the retrieval fails
      */
-    public AgileResource(RestClient restclient, JSONObject json) throws JiraException {
+    public AgileResource(RestClient restclient, Map json) throws JiraException {
         this.restclient = restclient;
         if (json != null) {
             deserialize(json);
@@ -77,20 +77,18 @@ public abstract class AgileResource {
     protected static <T extends AgileResource> T getResource(
             Class<T> type, Object r, RestClient restclient) throws JiraException {
 
-        if (!(r instanceof JSONObject)) {
+        if (!(r instanceof Map)) {
             throw new JiraException("JSON payload is malformed");
         }
 
         T result = null;
 
-        if (!((JSONObject) r).isNullObject()) {
             try {
-                Constructor<T> constructor = type.getDeclaredConstructor(RestClient.class, JSONObject.class);
-                result = constructor.newInstance(restclient, r);
+                Constructor<T> constructor = type.getDeclaredConstructor(RestClient.class, Map.class);
+                result = constructor.newInstance(restclient, ((Map) r));
             } catch (Exception e) {
                 throw new JiraException("Failed to deserialize object.", e);
             }
-        }
 
         return result;
     }
@@ -107,19 +105,19 @@ public abstract class AgileResource {
      */
     protected static <T extends AgileResource> List<T> getResourceArray(
             Class<T> type, Object ra, RestClient restclient, String listName) throws JiraException {
-        if (!(ra instanceof JSONObject)) {
+        if (!(ra instanceof Map)) {
             throw new JiraException("JSON payload is malformed");
         }
 
-        JSONObject jo = (JSONObject) ra;
+        Map jo = (Map) ra;
 
-        if (!jo.containsKey(listName) || !(jo.get(listName) instanceof JSONArray)) {
+        if (!jo.containsKey(listName) || !(jo.get(listName) instanceof List)) {
             throw new JiraException("No array found for name '" + listName + "'");
         }
 
         List<T> results = new ArrayList<T>();
 
-        for (Object v : (JSONArray) jo.get(listName)) {
+        for (Object v : (List) jo.get(listName)) {
             T item = getResource(type, v, restclient);
             if (item != null) {
                 results.add(item);
@@ -156,9 +154,12 @@ public abstract class AgileResource {
     static <T extends AgileResource> List<T> list(
             RestClient restclient, Class<T> type, String url, String listName) throws JiraException {
 
-        JSON result;
+        Map result = null;
         try {
-            result = restclient.get(url);
+            String resultJson = restclient.get(url);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve a list of " + type.getSimpleName() + " : " + url, ex);
         }
@@ -180,9 +181,12 @@ public abstract class AgileResource {
      */
     static <T extends AgileResource> T get(RestClient restclient, Class<T> type, String url) throws JiraException {
 
-        JSON result;
+        Map result = null;
         try {
-            result = restclient.get(url);
+            String resultJson = restclient.get(url);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve " + type.getSimpleName() + " : " + url, ex);
         }
@@ -205,7 +209,7 @@ public abstract class AgileResource {
      * @throws JiraException when the retrieval fails
      */
     <T extends AgileResource> List<T> getSubResourceArray(
-            Class<T> type, JSONObject subJson, String resourceName) throws JiraException {
+            Class<T> type, Map subJson, String resourceName) throws JiraException {
         List<T> result = null;
         if (subJson.containsKey(resourceName)) {
             result = getResourceArray(type, subJson.get(resourceName), getRestclient(), resourceName + "s");
@@ -224,7 +228,7 @@ public abstract class AgileResource {
      * @throws JiraException when the retrieval fails
      */
     <T extends AgileResource> T getSubResource(
-            Class<T> type, JSONObject subJson, String resourceName) throws JiraException {
+            Class<T> type, Map subJson, String resourceName) throws JiraException {
         T result = null;
         if (subJson.containsKey(resourceName) && !subJson.get(resourceName).equals("null")) {
             result = getResource(type, subJson.get(resourceName), getRestclient());
@@ -283,7 +287,7 @@ public abstract class AgileResource {
      *
      * @param json The JSON object to read.
      */
-    void deserialize(JSONObject json) throws JiraException {
+    void deserialize(Map json) throws JiraException {
 
         id = getLong(json.get("id"));
         name = Field.getString(json.get("name"));
@@ -296,7 +300,7 @@ public abstract class AgileResource {
      *
      * @param json The json object to extract attributes from.
      */
-    void addAttributes(JSONObject json) {
+    void addAttributes(Map json) {
         attributes.putAll(json);
     }
 

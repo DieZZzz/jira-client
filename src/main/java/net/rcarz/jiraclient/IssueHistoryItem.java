@@ -2,9 +2,10 @@ package net.rcarz.jiraclient;
 
 import java.util.Map;
 
-import net.sf.json.JSONObject;
-
 public class IssueHistoryItem extends Resource {
+
+    public IssueHistoryItem() {
+    }
 
     private String field;
     private String from;
@@ -16,14 +17,14 @@ public class IssueHistoryItem extends Resource {
         super(restclient);
     }
 
-    public IssueHistoryItem(RestClient restclient, JSONObject json) {
+    public IssueHistoryItem(RestClient restclient, Map json) {
         this(restclient);
         if (json != null) {
             deserialise(restclient,json);
         }
     }
 
-    private void deserialise(RestClient restclient, JSONObject json) {
+    private void deserialise(RestClient restclient, Map json) {
         Map map = json;
         self = Field.getString(map.get("self"));
         id = Field.getString(map.get("id"));

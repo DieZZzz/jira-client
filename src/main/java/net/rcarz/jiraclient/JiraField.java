@@ -1,8 +1,6 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import net.rcarz.jiraclient.util.JsonUtil;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -24,12 +22,12 @@ public class JiraField {
     private List<String> clauseNames = null;
     private JiraFieldSchema schema = null;
 
-    public JiraField(JSONObject json) {
+    public JiraField(Map json) {
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         id = Field.getString(map.get("id"));
@@ -53,25 +51,25 @@ public class JiraField {
      * @throws JiraException when the retrieval fails
      */
     public static List<JiraField> get(RestClient restclient) throws JiraException {
-        JSON result = null;
+        List result = null;
 
         try {
             URI uri = restclient.buildURI(String.format("/rest/api/%s/", Resource.DEFAULT_API_REV) + "field/");
-            result = restclient.get(uri);
+            String resultJson = restclient.get(uri);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, List.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve fields list", ex);
         }
 
-        if (!(result instanceof JSONArray))
-            throw new JiraException("JSON payload is malformed");
-
         List<JiraField> results = new ArrayList<JiraField>();
 
-        for (Object v : (JSONArray)result) {
+        for (Object v : result) {
             JiraField item = null;
 
-            if (v instanceof JSONObject && !((JSONObject)v).isNullObject()) {
-                item = new JiraField((JSONObject) v);
+            if (v instanceof Map) {
+                item = new JiraField(((Map) v));
             }
 
             results.add(item);

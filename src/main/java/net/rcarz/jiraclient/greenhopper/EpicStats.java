@@ -23,8 +23,6 @@ import net.rcarz.jiraclient.Field;
 
 import java.util.Map;
 
-import net.sf.json.JSONObject;
-
 /**
  * GreenHopper epic statistics.
  */
@@ -42,7 +40,7 @@ public class EpicStats {
      *
      * @param json JSON payload
      */
-    protected EpicStats(JSONObject json) {
+    protected EpicStats(Map json) {
         Map map = json;
 
         notDoneEstimate = Field.getDouble(map.get("notDoneEstimate"));

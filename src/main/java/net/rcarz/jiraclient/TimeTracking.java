@@ -19,9 +19,9 @@
 
 package net.rcarz.jiraclient;
 
-import java.util.Map;
-
 import net.sf.json.JSONObject;
+
+import java.util.Map;
 
 /**
  * Represents issue time tracking data.
@@ -40,7 +40,7 @@ public class TimeTracking {
      *
      * @param json JSON payload
      */
-    protected TimeTracking(JSONObject json) {
+    protected TimeTracking(Map json) {
         Map<?, ?> map = json;
 
         originalEstimate = Field.getString(map.get("originalEstimate"));

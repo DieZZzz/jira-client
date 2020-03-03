@@ -1,17 +1,15 @@
 package net.rcarz.jiraclient;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import net.rcarz.jiraclient.Issue.SearchResult;
 import net.rcarz.jiraclient.JiraClient.JqlValidateParameter;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class SearchTest {
 
@@ -22,11 +20,12 @@ public class SearchTest {
     String key = "JRASERVER-1";
     Issue.SearchResult searchResult = jira.searchIssues("key = " + key);
 
+    Issue issue = searchResult.issues.get(0);
     assertNotNull(searchResult);
     assertEquals("should return exactly 1 issue", 1, searchResult.issues.size());
-    assertEquals("with key " + key, key, searchResult.issues.get(0).getKey());
+    assertEquals("with key " + key, key, issue.getKey());
     assertEquals("and resolution Fixed", "Fixed",
-        searchResult.issues.get(0).getResolution().getName());
+        issue.getResolution().getName());
   }
 
   @Test(expected = RuntimeException.class)

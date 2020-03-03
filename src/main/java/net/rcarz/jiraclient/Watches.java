@@ -19,8 +19,7 @@
 
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import net.rcarz.jiraclient.util.JsonUtil;
 
 import java.util.Map;
 
@@ -28,6 +27,9 @@ import java.util.Map;
  * Represents issue watches.
  */
 public class Watches extends Resource {
+
+    public Watches() {
+    }
 
     private String name = null;
     private int watchCount = 0;
@@ -39,14 +41,14 @@ public class Watches extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Watches(RestClient restclient, JSONObject json) {
+    protected Watches(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -68,18 +70,21 @@ public class Watches extends Resource {
     public static Watches get(RestClient restclient, String issue)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "issue/" + issue + "/watches");
+            String resultJson = restclient.get(getBaseUri() + "issue/" + issue + "/watches");
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve watches for issue " + issue, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new Watches(restclient, (JSONObject)result);
+        return new Watches(restclient, result);
     }
 
     @Override
