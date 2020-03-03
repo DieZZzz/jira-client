@@ -641,33 +641,28 @@ public class Issue extends Resource {
                 startAt = startAt + issues.size();
             }
 
-            Object result;
+            Map result = null;
 
             try {
                 URI searchUri = createSearchURI(restclient, resourcePath, jql, includedFields,
                         expandFields, maxResults, startAt, jqlValidateParameter);
-                 result = restclient.getIssueSearchResult(searchUri);
-//                 result = restclient.get(searchUri);
+                String resultJson = restclient.get(searchUri);
+                if (resultJson!=null) {
+                    result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+                }
             } catch (Exception ex) {
                 throw new JiraException("Failed to search issues", ex);
             }
 
-            if (result instanceof RestClient.IssueSearchResult) {
-                RestClient.IssueSearchResult searchResult = (RestClient.IssueSearchResult) result;
-                this.startAt = searchResult.getStartAt();
-                this.maxResults = searchResult.getMaxResults();
-                this.total = searchResult.getTotal();
-                this.issues = searchResult.getIssues();
-            } else {
-                Map map = (Map)result;
-                this.startAt = Field.getInteger(map.get("startAt"));
-                this.maxResults = Field.getInteger(map.get("maxResults"));
-                this.total = Field.getInteger(map.get("total"));
-                this.issues = Field.getResourceArray(Issue.class, map.get("issues"), this.restclient);
-                return this.issues;
+            if (result==null) {
+                throw new JiraException("JSON payload is malformed");
             }
-
-            return issues;
+            Map map = (Map) result;
+            this.startAt = Field.getInteger(map.get("startAt"));
+            this.maxResults = Field.getInteger(map.get("maxResults"));
+            this.total = Field.getInteger(map.get("total"));
+            this.issues = Field.getResourceArray(Issue.class, map.get("issues"), this.restclient);
+            return this.issues;
         }
     }
     

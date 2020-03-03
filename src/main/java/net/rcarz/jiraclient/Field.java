@@ -560,7 +560,7 @@ public final class Field {
         TimeTracking result = null;
 
         if (tt instanceof Map)
-            result = new TimeTracking((JSONObject)tt);
+            result = new TimeTracking((Map) tt);
 
         return result;
     }

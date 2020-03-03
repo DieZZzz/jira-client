@@ -19,7 +19,6 @@
 
 package net.rcarz.jiraclient;
 
-import net.rcarz.jiraclient.util.JsonUtil;
 import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 import org.apache.http.*;
@@ -37,7 +36,6 @@ import org.apache.http.entity.mime.content.InputStreamBody;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -413,101 +411,6 @@ public class RestClient {
      */
     public HttpClient getHttpClient() {
         return this.httpClient;
-    }
-
-    public IssueSearchResult getIssueSearchResult(URI searchUri) throws RestException, IOException {
-        HttpGet req = new HttpGet(searchUri);
-        req.addHeader("Accept", "application/json");
-
-        if (creds!=null)
-            creds.authenticate(req);
-
-        final StringBuilder result = new StringBuilder();
-        HttpResponse resp = httpClient.execute(req, new ResponseHandler<HttpResponse>() {
-            public HttpResponse handleResponse(HttpResponse resp) throws ClientProtocolException, IOException {
-                HttpEntity ent = resp.getEntity();
-
-                if (ent!=null) {
-                    String encoding = null;
-                    if (ent.getContentEncoding()!=null) {
-                        encoding = ent.getContentEncoding().getValue();
-                    }
-
-                    if (encoding==null) {
-                        Header contentTypeHeader = resp.getFirstHeader("Content-Type");
-                        HeaderElement[] contentTypeElements = contentTypeHeader.getElements();
-                        for (HeaderElement he : contentTypeElements) {
-                            NameValuePair nvp = he.getParameterByName("charset");
-                            if (nvp!=null) {
-                                encoding = nvp.getValue();
-                            }
-                        }
-                    }
-
-                    InputStreamReader isr = encoding!=null ?
-                            new InputStreamReader(ent.getContent(), encoding):
-                            new InputStreamReader(ent.getContent());
-                    BufferedReader br = new BufferedReader(isr);
-                    String line = "";
-
-                    while ((line = br.readLine())!=null)
-                        result.append(line);
-                }
-
-                return resp;
-            }
-        });
-
-        StatusLine sl = resp.getStatusLine();
-
-        String body = result.toString();
-        if (sl.getStatusCode() >= 300) {
-            throw new RestException(sl.getReasonPhrase(), sl.getStatusCode(), body);
-        }
-
-
-        return result.length() > 0 ? JsonUtil.OBJECT_MAPPER.readValue(body, IssueSearchResult.class) : null;
-    }
-
-
-    public static class IssueSearchResult {
-
-        private Integer startAt;
-        private Integer maxResults;
-        private Integer total;
-        private List<Issue> issues;
-
-        public Integer getStartAt() {
-            return startAt;
-        }
-
-        public void setStartAt(Integer startAt) {
-            this.startAt = startAt;
-        }
-
-        public Integer getMaxResults() {
-            return maxResults;
-        }
-
-        public void setMaxResults(Integer maxResults) {
-            this.maxResults = maxResults;
-        }
-
-        public Integer getTotal() {
-            return total;
-        }
-
-        public void setTotal(Integer total) {
-            this.total = total;
-        }
-
-        public List<Issue> getIssues() {
-            return issues;
-        }
-
-        public void setIssues(List<Issue> issues) {
-            this.issues = issues;
-        }
     }
 
 }
