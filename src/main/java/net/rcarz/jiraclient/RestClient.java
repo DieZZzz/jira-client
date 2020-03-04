@@ -22,9 +22,7 @@ package net.rcarz.jiraclient;
 import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 import org.apache.http.*;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
@@ -32,8 +30,12 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.InputStreamBody;
+import org.apache.http.util.EntityUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -107,48 +109,40 @@ public class RestClient {
         if (creds!=null)
             creds.authenticate(req);
 
-        final StringBuilder result = new StringBuilder();
-        HttpResponse resp = httpClient.execute(req, new ResponseHandler<HttpResponse>() {
-            public HttpResponse handleResponse(HttpResponse resp) throws ClientProtocolException, IOException {
-                HttpEntity ent = resp.getEntity();
+        final String[] result = new String[1];
+        HttpResponse resp = httpClient.execute(req, resp1 -> {
+            HttpEntity ent = resp1.getEntity();
 
-                if (ent!=null) {
-                    String encoding = null;
-                    if (ent.getContentEncoding()!=null) {
-                        encoding = ent.getContentEncoding().getValue();
-                    }
-
-                    if (encoding==null) {
-                        Header contentTypeHeader = resp.getFirstHeader("Content-Type");
-                        HeaderElement[] contentTypeElements = contentTypeHeader.getElements();
-                        for (HeaderElement he : contentTypeElements) {
-                            NameValuePair nvp = he.getParameterByName("charset");
-                            if (nvp!=null) {
-                                encoding = nvp.getValue();
-                            }
-                        }
-                    }
-
-                    InputStreamReader isr = encoding!=null ?
-                            new InputStreamReader(ent.getContent(), encoding):
-                            new InputStreamReader(ent.getContent());
-                    BufferedReader br = new BufferedReader(isr);
-                    String line = "";
-
-                    while ((line = br.readLine())!=null)
-                        result.append(line);
+            if (ent!=null) {
+                String encoding = null;
+                if (ent.getContentEncoding()!=null) {
+                    encoding = ent.getContentEncoding().getValue();
                 }
 
-                return resp;
+                if (encoding==null) {
+                    Header contentTypeHeader = resp1.getFirstHeader("Content-Type");
+                    HeaderElement[] contentTypeElements = contentTypeHeader.getElements();
+                    for (HeaderElement he : contentTypeElements) {
+                        NameValuePair nvp = he.getParameterByName("charset");
+                        if (nvp!=null) {
+                            encoding = nvp.getValue();
+                        }
+                    }
+                }
+
+                String resultJson = EntityUtils.toString(ent, encoding);
+                result[0] = resultJson;
             }
+
+            return resp1;
         });
 
         StatusLine sl = resp.getStatusLine();
 
         if (sl.getStatusCode() >= 300) {
-            throw new RestException(sl.getReasonPhrase(), sl.getStatusCode(), result.toString());
+            throw new RestException(sl.getReasonPhrase(), sl.getStatusCode(), result[0]);
         }
-        return result.length() > 0 ? result.toString() : null;
+        return result[0];
     }
 
     private String request(HttpEntityEnclosingRequestBase req, String payload)
