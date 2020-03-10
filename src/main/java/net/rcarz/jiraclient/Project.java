@@ -19,20 +19,18 @@
 
 package net.rcarz.jiraclient;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import net.rcarz.jiraclient.util.JsonUtil;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import java.net.URI;
+import java.util.*;
 
 /**
  * Represents a JIRA project.
  */
 public class Project extends Resource {
+
+    public Project() {
+    }
 
     private Map<String, String> avatarUrls = null;
     private String key = null;
@@ -53,14 +51,14 @@ public class Project extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Project(RestClient restclient, JSONObject json) {
+    protected Project(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -95,18 +93,21 @@ public class Project extends Resource {
     public static Project get(RestClient restclient, String key)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "project/" + key);
+            String resultJson = restclient.get(getBaseUri() + "project/" + key);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve project " + key, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new Project(restclient, (JSONObject)result);
+        return new Project(restclient, result);
     }
 
     public static Map<String, List<String>> getIssueTypesWithStatuses(RestClient restclient, String key) throws JiraException {
@@ -114,8 +115,12 @@ public class Project extends Resource {
             Map<String, List<String>> result = new HashMap<String, List<String>>();
 
             URI uri = restclient.buildURI(Resource.getBaseUri() + "project/" + key + "/statuses/");
-            JSON response = restclient.get(uri);
-            List<IssueType> issueTypes = Field.getResourceArray(IssueType.class, response, restclient);
+            String resultJson = restclient.get(uri);
+            List resultList = null;
+            if (resultJson!=null) {
+                resultList = JsonUtil.OBJECT_MAPPER.readValue(resultJson, List.class);
+            }
+            List<IssueType> issueTypes = Field.getResourceArray(IssueType.class, resultList, restclient);
 
             for (IssueType issueType : issueTypes) {
                 List<String> statusList = new ArrayList<String>();
@@ -142,8 +147,16 @@ public class Project extends Resource {
     public static List<LinkType> getIssueLinkTypes(RestClient restclient, String key) throws JiraException {
         try {
             URI uri = restclient.buildURI(Resource.getBaseUri() + "issueLinkType");
-            JSON response = restclient.get(uri);
-            return Field.getResourceArray(LinkType.class, ((JSONObject) response).get("issueLinkTypes"), restclient);
+            String resultJson = restclient.get(uri);
+            Map result = null;
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
+            if (result!=null) {
+                return Field.getResourceArray(LinkType.class, result.get("issueLinkTypes"), restclient);
+            } else {
+                return Collections.emptyList();
+            }
         } catch (Exception ex) {
             throw new JiraException(ex.getMessage(), ex);
         }
@@ -159,15 +172,18 @@ public class Project extends Resource {
      * @throws JiraException when the retrieval fails
      */
     public static List<Project> getAll(RestClient restclient) throws JiraException {
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "project");
+            String resultJson = restclient.get(getBaseUri() + "project");
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve projects", ex);
         }
 
-        if (!(result instanceof JSONArray))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
         return Field.getResourceArray(Project.class, result, restclient);

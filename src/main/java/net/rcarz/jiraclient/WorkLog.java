@@ -19,17 +19,18 @@
 
 package net.rcarz.jiraclient;
 
-import java.text.SimpleDateFormat;
+import net.rcarz.jiraclient.util.JsonUtil;
+
 import java.util.Date;
 import java.util.Map;
-
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
 
 /**
  * Represents an issue work log.
  */
 public class WorkLog extends Resource {
+
+    public WorkLog() {
+    }
 
     private User author = null;
     private String comment = null;
@@ -46,14 +47,14 @@ public class WorkLog extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected WorkLog(RestClient restclient, JSONObject json) {
+    protected WorkLog(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -82,18 +83,21 @@ public class WorkLog extends Resource {
     public static WorkLog get(RestClient restclient, String issue, String id)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "issue/" + issue + "/worklog/" + id);
+            String resultJson = restclient.get(getBaseUri() + "issue/" + issue + "/worklog/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve work log " + id + " on issue " + issue, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new WorkLog(restclient, (JSONObject)result);
+        return new WorkLog(restclient, result);
     }
 
     @Override

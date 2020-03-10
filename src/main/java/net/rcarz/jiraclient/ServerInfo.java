@@ -1,7 +1,6 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import net.rcarz.jiraclient.util.JsonUtil;
 
 import java.net.URI;
 import java.util.Date;
@@ -29,12 +28,12 @@ public class ServerInfo {
      *
      * @param json JSON payload
      */
-    public ServerInfo(JSONObject json) {
+    public ServerInfo(Map json) {
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         baseUrl = Field.getString(map.get("baseUrl"));
@@ -53,21 +52,24 @@ public class ServerInfo {
         return new ServerInfo(realGet(restclient));
     }
 
-    private static JSONObject realGet(RestClient restclient) throws JiraException {
-        JSON result = null;
+    private static Map realGet(RestClient restclient) throws JiraException {
+        Map result = null;
 
         try {
             URI uri = restclient.buildURI(String.format("/rest/api/%s/", Resource.DEFAULT_API_REV) + "serverInfo/");
-            result = restclient.get(uri);
+            String resultJson = restclient.get(uri);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve Server Info ", ex);
         }
 
-        if (!(result instanceof JSONObject)) {
+        if (result == null) {
             throw new JiraException("JSON payload is malformed");
         }
 
-        return (JSONObject) result;
+        return result;
     }
 
     public String getBaseUrl() {

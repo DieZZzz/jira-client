@@ -27,8 +27,6 @@ import net.rcarz.jiraclient.RestClient;
 import java.util.List;
 import java.util.Map;
 
-import net.sf.json.JSONObject;
-
 /**
  * A base class for GreenHopper issues.
  */
@@ -59,14 +57,14 @@ public abstract class GreenHopperIssue extends GreenHopperResource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected GreenHopperIssue(RestClient restclient, JSONObject json) {
+    protected GreenHopperIssue(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         id = Field.getInteger(map.get("id"));

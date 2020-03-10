@@ -19,15 +19,17 @@
 
 package net.rcarz.jiraclient;
 
-import java.util.Map;
+import net.rcarz.jiraclient.util.JsonUtil;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import java.util.Map;
 
 /**
  * Represents a project category.
  */
 public class ProjectCategory extends Resource {
+
+    public ProjectCategory() {
+    }
 
     private String name = null;
     private String description = null;
@@ -38,14 +40,14 @@ public class ProjectCategory extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected ProjectCategory(RestClient restclient, JSONObject json) {
+    protected ProjectCategory(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -67,18 +69,21 @@ public class ProjectCategory extends Resource {
     public static ProjectCategory get(RestClient restclient, String id)
             throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "projectCategory/" + id);
+            String resultJson = restclient.get(getBaseUri() + "projectCategory/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve status " + id, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new ProjectCategory(restclient, (JSONObject)result);
+        return new ProjectCategory(restclient, result);
     }
 
     @Override

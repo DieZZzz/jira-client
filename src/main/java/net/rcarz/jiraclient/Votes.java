@@ -19,8 +19,7 @@
 
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import net.rcarz.jiraclient.util.JsonUtil;
 
 import java.util.Map;
 
@@ -28,6 +27,9 @@ import java.util.Map;
  * Represents issue votes.
  */
 public class Votes extends Resource {
+
+    public Votes() {
+    }
 
     private int votes = 0;
     private boolean hasVoted = false;
@@ -38,14 +40,14 @@ public class Votes extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Votes(RestClient restclient, JSONObject json) {
+    protected Votes(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -67,18 +69,21 @@ public class Votes extends Resource {
     public static Votes get(RestClient restclient, String issue)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "issue/" + issue + "/votes");
+            String resultJson = restclient.get(getBaseUri() + "issue/" + issue + "/votes");
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve votes for issue " + issue, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new Votes(restclient, (JSONObject)result);
+        return new Votes(restclient, result);
     }
 
     @Override

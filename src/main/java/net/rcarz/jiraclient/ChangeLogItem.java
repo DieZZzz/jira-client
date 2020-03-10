@@ -21,8 +21,6 @@ package net.rcarz.jiraclient;
 
 import java.util.Map;
 
-import net.sf.json.JSONObject;
-
 /**
  * Item in a {@link ChangeLogEntry}.
  */
@@ -57,13 +55,16 @@ public class ChangeLogItem extends Resource {
      */
     private String toString = null;
 
+    public ChangeLogItem() {
+    }
+
     /**
      * Creates a change log item from a JSON payload.
      *
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected ChangeLogItem(RestClient restclient, JSONObject json) {
+    protected ChangeLogItem(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
@@ -74,7 +75,7 @@ public class ChangeLogItem extends Resource {
      * Deserializes the json payload.
      * @param json the json payload
      */
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         field = Field.getString(map.get("field"));

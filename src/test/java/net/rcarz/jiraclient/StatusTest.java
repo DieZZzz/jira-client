@@ -36,7 +36,7 @@ public class StatusTest {
     @Test
     public void testGetStatus() throws Exception {
         final RestClient restClient = PowerMockito.mock(RestClient.class);
-        when(restClient.get(anyString())).thenReturn(getTestJSON());
+        when(restClient.get(anyString())).thenReturn(getTestJSON().toString());
         Status status = Status.get(restClient,"someID");
         assertEquals(status.getDescription(), description);
         assertEquals(status.getIconUrl(), iconURL);

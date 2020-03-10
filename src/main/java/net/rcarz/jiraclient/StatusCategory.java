@@ -1,12 +1,16 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import net.rcarz.jiraclient.util.JsonUtil;
+
+import java.util.Map;
 
 /**
  * Represent statusCategory of Status.
  */
 public class StatusCategory extends Resource {
+
+    public StatusCategory() {
+    }
 
     private String key;
 
@@ -20,7 +24,7 @@ public class StatusCategory extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected StatusCategory(RestClient restclient, JSONObject json) {
+    protected StatusCategory(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null) {
@@ -28,7 +32,7 @@ public class StatusCategory extends Resource {
         }
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
 
         self = Field.getString(json.get("self"));
         id = Field.getString(json.get("id"));
@@ -50,18 +54,21 @@ public class StatusCategory extends Resource {
     public static StatusCategory get(RestClient restclient, String id)
             throws JiraException {
 
-        JSON result;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "statuscategory/" + id);
+            String resultJson = restclient.get(getBaseUri() + "statuscategory/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve statusCategory " + id, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new StatusCategory(restclient, (JSONObject)result);
+        return new StatusCategory(restclient, result);
     }
 
     public String getKey() {

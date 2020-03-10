@@ -1,7 +1,6 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import net.rcarz.jiraclient.util.JsonUtil;
 
 import java.net.URI;
 import java.util.Map;
@@ -11,18 +10,21 @@ import java.util.Map;
  */
 public class Filter extends Resource {
 
+	public Filter() {
+	}
+
 	private String name;
 	private String jql;
 	private boolean favourite;
 
-	public Filter(RestClient restclient, JSONObject json) {
+	public Filter(RestClient restclient, Map json) {
 		super(restclient);
 
 		if (json != null)
 			deserialise(json);
 	}
 
-	private void deserialise(JSONObject json) {
+	private void deserialise(Map json) {
 		Map map = json;
 
 		id = Field.getString(map.get("id"));
@@ -45,20 +47,19 @@ public class Filter extends Resource {
 	}
 
 	public static Filter get(final RestClient restclient, final String id) throws JiraException {
-		JSON result = null;
+		Map result = null;
 
 		try {
 			URI uri = restclient.buildURI(getBaseUri() + "filter/" + id);
-			result = restclient.get(uri);
+			String resultJson = restclient.get(uri);
+			if (resultJson!=null) {
+				result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+			}
 		} catch (Exception ex) {
 			throw new JiraException("Failed to retrieve filter with id " + id, ex);
 		}
 
-		if (!(result instanceof JSONObject)) {
-			throw new JiraException("JSON payload is malformed");
-		}
-
-		return new Filter(restclient, (JSONObject) result);
+		return new Filter(restclient, result);
 	}
 
 	@Override

@@ -21,14 +21,11 @@ package net.rcarz.jiraclient.greenhopper;
 
 import net.rcarz.jiraclient.Field;
 import net.rcarz.jiraclient.RestClient;
+import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import net.sf.json.JSONObject;
-
-import org.joda.time.DateTime;
 
 /**
  * Represents a GreenHopper sprint.
@@ -49,14 +46,14 @@ public class Sprint extends GreenHopperResource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Sprint(RestClient restclient, JSONObject json) {
+    protected Sprint(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         id = Field.getInteger(map.get("id"));

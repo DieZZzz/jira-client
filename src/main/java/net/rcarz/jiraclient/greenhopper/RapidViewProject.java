@@ -26,8 +26,6 @@ import net.rcarz.jiraclient.RestClient;
 
 import java.util.Map;
 
-import net.sf.json.JSONObject;
-
 /**
  * Represents a GreenHopper JIRA project.
  */
@@ -42,14 +40,14 @@ public class RapidViewProject extends GreenHopperResource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected RapidViewProject(RestClient restclient, JSONObject json) {
+    protected RapidViewProject(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         id = Field.getInteger(map.get("id"));

@@ -20,14 +20,9 @@
 package net.rcarz.jiraclient.greenhopper;
 
 import net.rcarz.jiraclient.Field;
-import net.rcarz.jiraclient.Issue;
-import net.rcarz.jiraclient.JiraException;
 import net.rcarz.jiraclient.RestClient;
 
-import java.util.List;
 import java.util.Map;
-
-import net.sf.json.JSONObject;
 
 /**
  * Represents a GreenHopper epic issue.
@@ -44,14 +39,14 @@ public class Epic extends GreenHopperIssue {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Epic(RestClient restclient, JSONObject json) {
+    protected Epic(RestClient restclient, Map json) {
         super(restclient, json);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         epicLabel = Field.getString(map.get("epicLabel"));

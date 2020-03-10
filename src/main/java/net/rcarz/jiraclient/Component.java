@@ -19,12 +19,10 @@
 
 package net.rcarz.jiraclient;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import net.rcarz.jiraclient.Issue.FluentCreate;
-import net.sf.json.JSON;
+import net.rcarz.jiraclient.util.JsonUtil;
 import net.sf.json.JSONObject;
+
+import java.util.Map;
 
 /**
  * Represents an issue component.
@@ -113,20 +111,23 @@ public class Component extends Resource {
          * @throws JiraException when the create fails
          */
         public Component execute() throws JiraException {
-            JSON result = null;
+            Map result = null;
 
             try {
-                result = restclient.post(getRestUri(null), req);
+                String resultJson = restclient.post(getRestUri(null), req);
+                if (resultJson!=null) {
+                    result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+                }
             } catch (Exception ex) {
                 throw new JiraException("Failed to create issue", ex);
             }
 
-            if (!(result instanceof JSONObject) || !((JSONObject) result).containsKey("id")
-                    || !(((JSONObject) result).get("id") instanceof String)) {
+            if (result == null || !result.containsKey("id")
+                    || !(result.get("id") instanceof String)) {
                 throw new JiraException("Unexpected result on create component");
             }
 
-            return new Component(restclient, (JSONObject) result);
+            return new Component(restclient, result);
         }
     }
 
@@ -134,20 +135,23 @@ public class Component extends Resource {
     private String description = null;
     private boolean isAssigneeTypeValid = false;
 
+    public Component() {
+    }
+
     /**
      * Creates a component from a JSON payload.
      *
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Component(RestClient restclient, JSONObject json) {
+    protected Component(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -170,18 +174,21 @@ public class Component extends Resource {
     public static Component get(RestClient restclient, String id)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getRestUri(id));
+            String resultJson = restclient.get(getRestUri(id));
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve component " + id, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new Component(restclient, (JSONObject)result);
+        return new Component(restclient, result);
     }
 
     @Override

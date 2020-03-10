@@ -40,7 +40,7 @@ public class VersionTest {
     @Test
     public void testGetVersion() throws Exception {
         final RestClient restClient = PowerMockito.mock(RestClient.class);
-        PowerMockito.when(restClient.get(anyString())).thenReturn(getTestJSON());
+        PowerMockito.when(restClient.get(anyString())).thenReturn(getTestJSON().toString());
         Version version = Version.get(restClient, "id");
 
         assertEquals(version.getId(), "10200");

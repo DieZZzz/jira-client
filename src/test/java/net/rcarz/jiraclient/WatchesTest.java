@@ -42,7 +42,7 @@ public class WatchesTest {
     @Test
     public void testGetWatchers() throws Exception {
         final RestClient restClient = PowerMockito.mock(RestClient.class);
-        PowerMockito.when(restClient.get(anyString())).thenReturn(getTestJSON());
+        PowerMockito.when(restClient.get(anyString())).thenReturn(getTestJSON().toString());
         final Watches watches = Watches.get(restClient, "someID");
 
         assertFalse(watches.isWatching());

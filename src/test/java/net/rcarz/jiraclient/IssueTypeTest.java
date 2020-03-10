@@ -4,9 +4,7 @@ import net.sf.json.JSONObject;
 import org.junit.Test;
 import org.powermock.api.mockito.PowerMockito;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertSame;
+import static junit.framework.Assert.*;
 import static org.mockito.Matchers.anyString;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -33,21 +31,22 @@ public class IssueTypeTest {
     public void testFields() throws Exception {
         final JSONObject testJSON = getTestJSON();
         final JSONObject fields = new JSONObject();
-        fields.put("key1","key1Value");
-        fields.put("key2","key2Value");
+        fields.put("key1", "key1Value");
+        fields.put("key2", "key2Value");
         testJSON.put("fields", fields);
         IssueType issueType = new IssueType(null, testJSON);
-        assertEquals(2,issueType.getFields().size());
-        assertSame("key1Value",issueType.getFields().getString("key1"));
-        assertSame("key2Value",issueType.getFields().getString("key2"));
+        assertEquals(2, issueType.getFields().size());
+        assertSame("key1Value", ((String) issueType.getFields().get("key1")));
+        assertSame("key2Value", issueType.getFields().get("key2"));
 
     }
 
     @Test
     public void testLoadIssueType() throws Exception {
         final RestClient restClient = PowerMockito.mock(RestClient.class);
-        when(restClient.get(anyString())).thenReturn(getTestJSON());
-        IssueType issueType = IssueType.get(restClient,"someID");
+        JSONObject testJSON = getTestJSON();
+        when(restClient.get(anyString())).thenReturn(testJSON.toString());
+        IssueType issueType = IssueType.get(restClient, "someID");
         assertFalse(issueType.isSubtask());
         assertEquals(issueType.getName(), "Story");
         assertEquals(issueType.getId(), "7");
@@ -66,14 +65,14 @@ public class IssueTypeTest {
     @Test(expected = JiraException.class)
     public void testJiraExceptionFromNonJSON() throws Exception {
         final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
-        IssueType.get(mockRestClient,"issueNumber");
+        IssueType.get(mockRestClient, "issueNumber");
     }
 
     @Test
-    public void testIssueTypeToString(){
+    public void testIssueTypeToString() {
         IssueType issueType = new IssueType(null, getTestJSON());
 
-        assertEquals(issueType.toString(),"Story");
+        assertEquals(issueType.toString(), "Story");
     }
 
     private JSONObject getTestJSON() {
