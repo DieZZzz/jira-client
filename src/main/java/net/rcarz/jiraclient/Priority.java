@@ -19,15 +19,17 @@
 
 package net.rcarz.jiraclient;
 
-import java.util.Map;
+import net.rcarz.jiraclient.util.JsonUtil;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import java.util.Map;
 
 /**
  * Represents an issue priority.
  */
 public class Priority extends Resource {
+
+    public Priority() {
+    }
 
     private String iconUrl = null;
     private String name = null;
@@ -38,14 +40,14 @@ public class Priority extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Priority(RestClient restclient, JSONObject json) {
+    protected Priority(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -67,18 +69,22 @@ public class Priority extends Resource {
     public static Priority get(RestClient restclient, String id)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "priority/" + id);
+            String resultJson = restclient.get(getBaseUri() + "priority/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
+
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve priority " + id, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new Priority(restclient, (JSONObject)result);
+        return new Priority(restclient, result);
     }
 
     @Override

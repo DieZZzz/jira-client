@@ -1,12 +1,13 @@
 package net.rcarz.jiraclient;
 
+import net.rcarz.jiraclient.Issue.SearchResult;
+import net.rcarz.jiraclient.JiraClient.JqlValidateParameter;
+import org.junit.Assert;
 import org.junit.Test;
 
-import java.nio.channels.Pipe;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import static org.junit.Assert.*;
 
@@ -19,10 +20,31 @@ public class SearchTest {
     String key = "JRASERVER-1";
     Issue.SearchResult searchResult = jira.searchIssues("key = " + key);
 
+    Issue issue = searchResult.issues.get(0);
     assertNotNull(searchResult);
     assertEquals("should return exactly 1 issue", 1, searchResult.issues.size());
-    assertEquals("with key " + key, key, searchResult.issues.get(0).getKey());
-    assertEquals("and resolution Fixed", "Fixed", searchResult.issues.get(0).getResolution().getName());
+    assertEquals("with key " + key, key, issue.getKey());
+    assertEquals("and resolution Fixed", "Fixed",
+        issue.getResolution().getName());
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testJqlSearchInexistentIssueWithValidateParameterTrue() throws JiraException {
+    JiraClient jira = new JiraClient("https://jira.atlassian.com/", null);
+
+    String key = "InexistentIssue";
+    jira.searchIssues("key = " + key, null, null, null, null, JqlValidateParameter.TRUE);
+  }
+
+  @Test
+  public void testJqlSearchInexistentIssueWithValidateParameterWarn() throws JiraException {
+    JiraClient jira = new JiraClient("https://jira.atlassian.com/", null);
+
+    String key = "InexistentIssue";
+    SearchResult searchResult = jira
+        .searchIssues("key = " + key, null, null, null, null, JqlValidateParameter.WARN);
+
+    Assert.assertEquals(0, searchResult.total);
   }
 
   @Test
@@ -34,7 +56,7 @@ public class SearchTest {
     Issue.SearchResult searchResult = jira.searchIssues(q);
 
     final String assertMsg = "Searches that yield no results, should return an empty "
-            + Issue.SearchResult.class.getSimpleName() + " instance";
+        + Issue.SearchResult.class.getSimpleName() + " instance";
     assertTrue(assertMsg, searchResult.issues.isEmpty());
     assertFalse(assertMsg, searchResult.issues.iterator().hasNext());
     assertEquals(assertMsg, 0, searchResult.total);
@@ -49,7 +71,7 @@ public class SearchTest {
     final Issue.SearchResult searchResult = jira.searchIssues("", usedMax);
     final List<Issue> iterResults = new ArrayList<Issue>(usedMax);
     final Iterator<Issue> iterator = searchResult.iterator();
-    for (int i = 0 ; i < usedMax ; i++) {
+    for (int i = 0; i < usedMax; i++) {
       iterResults.add(iterator.next());
     }
     assertEquals(searchResult.issues, iterResults);
@@ -64,7 +86,7 @@ public class SearchTest {
     Issue.SearchResult searchResult = jira.searchIssues("", usedMax);
     final Iterator<Issue> iterator = searchResult.iterator();
     System.out.println(searchResult.issues);
-    for (int i = 0 ; i < 3 ; i++) {
+    for (int i = 0; i < 3; i++) {
       //Running this 3 times without failing, ensures the it can fetch issues beyond the first fetch batch size, as the used max result is only 2.
       iterator.next();
     }

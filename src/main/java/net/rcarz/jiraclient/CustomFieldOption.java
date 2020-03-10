@@ -19,15 +19,17 @@
 
 package net.rcarz.jiraclient;
 
-import java.util.Map;
+import net.rcarz.jiraclient.util.JsonUtil;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import java.util.Map;
 
 /**
  * Represents an custom field option.
  */
 public class CustomFieldOption extends Resource {
+
+    public CustomFieldOption() {
+    }
 
     private String value = null;
 
@@ -37,14 +39,14 @@ public class CustomFieldOption extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected CustomFieldOption(RestClient restclient, JSONObject json) {
+    protected CustomFieldOption(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -65,18 +67,21 @@ public class CustomFieldOption extends Resource {
     public static CustomFieldOption get(RestClient restclient, String id)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "customFieldOption/" + id);
+            String resultJson = restclient.get(getBaseUri() + "customFieldOption/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve custom field option " + id, ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new CustomFieldOption(restclient, (JSONObject)result);
+        return new CustomFieldOption(restclient, result);
     }
 
     @Override

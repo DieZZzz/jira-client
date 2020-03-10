@@ -90,7 +90,7 @@ public class UserTest {
     public void testGetUser() throws Exception {
 
         final RestClient restClient = PowerMockito.mock(RestClient.class);
-        when(restClient.get(anyString(),anyMap())).thenReturn(getTestJSON());
+        when(restClient.get(anyString(),anyMap())).thenReturn(getTestJSON().toString());
         final User user = User.get(restClient, "username");
 
         assertEquals(user.getName(), username);

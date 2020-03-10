@@ -20,15 +20,12 @@
 package net.rcarz.jiraclient.greenhopper;
 
 import net.rcarz.jiraclient.RestClient;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
+import java.util.Map;
 
 /**
  * Utility functions for translating between JSON and fields.
@@ -65,8 +62,8 @@ public final class GreenHopperField {
     public static EpicStats getEpicStats(Object es) {
         EpicStats result = null;
 
-        if (es instanceof JSONObject && !((JSONObject)es).isNullObject())
-            result = new EpicStats((JSONObject)es);
+        if (es instanceof Map)
+            result = new EpicStats((Map)es);
 
         return result;
     }
@@ -81,8 +78,8 @@ public final class GreenHopperField {
     public static EstimateStatistic getEstimateStatistic(Object es) {
         EstimateStatistic result = null;
 
-        if (es instanceof JSONObject && !((JSONObject)es).isNullObject())
-            result = new EstimateStatistic((JSONObject)es);
+        if (es instanceof Map)
+            result = new EstimateStatistic((Map)es);
 
         return result;
     }
@@ -97,8 +94,8 @@ public final class GreenHopperField {
     public static EstimateSum getEstimateSum(Object es) {
         EstimateSum result = null;
 
-        if (es instanceof JSONObject && !((JSONObject)es).isNullObject())
-            result = new EstimateSum((JSONObject)es);
+        if (es instanceof Map)
+            result = new EstimateSum((Map)es);
 
         return result;
     }
@@ -113,8 +110,8 @@ public final class GreenHopperField {
     public static List<Integer> getIntegerArray(Object ia) {
         List<Integer> results = new ArrayList<Integer>();
 
-        if (ia instanceof JSONArray) {
-            for (Object v : (JSONArray)ia)
+        if (ia instanceof List) {
+            for (Object v : (List)ia)
                 results.add((Integer)v);
         }
 
@@ -135,19 +132,19 @@ public final class GreenHopperField {
 
         T result = null;
 
-        if (r instanceof JSONObject && !((JSONObject)r).isNullObject()) {
+        if (r instanceof Map) {
             if (type == Epic.class)
-                result = (T)new Epic(restclient, (JSONObject)r);
+                result = (T)new Epic(restclient, (Map)r);
             else if (type == Marker.class)
-                result = (T)new Marker(restclient, (JSONObject)r);
+                result = (T)new Marker(restclient, (Map)r);
             else if (type == RapidView.class)
-                result = (T)new RapidView(restclient, (JSONObject)r);
+                result = (T)new RapidView(restclient, (Map)r);
             else if (type == RapidViewProject.class)
-                result = (T)new RapidViewProject(restclient, (JSONObject)r);
+                result = (T)new RapidViewProject(restclient, (Map)r);
             else if (type == Sprint.class)
-                result = (T)new Sprint(restclient, (JSONObject)r);
+                result = (T)new Sprint(restclient, (Map)r);
             else if (type == SprintIssue.class)
-                result = (T)new SprintIssue(restclient, (JSONObject)r);
+                result = (T)new SprintIssue(restclient, (Map)r);
         }
 
         return result;
@@ -167,8 +164,8 @@ public final class GreenHopperField {
 
         List<T> results = new ArrayList<T>();
 
-        if (ra instanceof JSONArray) {
-            for (Object v : (JSONArray)ra) {
+        if (ra instanceof List) {
+            for (Object v : ((List) ra)) {
                 T item = getResource(type, v, restclient);
                 if (item != null)
                     results.add(item);
@@ -188,8 +185,8 @@ public final class GreenHopperField {
     public static List<String> getStringArray(Object ia) {
         List<String> results = new ArrayList<String>();
 
-        if (ia instanceof JSONArray) {
-            for (Object v : (JSONArray)ia)
+        if (ia instanceof List) {
+            for (Object v : (List)ia)
                 results.add((String)v);
         }
 

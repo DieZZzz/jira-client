@@ -19,15 +19,16 @@
 
 package net.rcarz.jiraclient;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import net.rcarz.jiraclient.JiraClient.JqlValidateParameter;
+import net.rcarz.jiraclient.util.JsonUtil;
+import net.sf.json.JSONObject;
+
 import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
 /**
  * Represents a JIRA issue.
@@ -41,9 +42,9 @@ public class Issue extends Resource {
 
         Map<String, Object> fields = new HashMap<String, Object>();
         RestClient restclient = null;
-        JSONObject createmeta = null;
+        Map createmeta = null;
 
-        private FluentCreate(RestClient restclient, JSONObject createmeta) {
+        private FluentCreate(RestClient restclient, Map createmeta) {
             this.restclient = restclient;
             this.createmeta = createmeta;
         }
@@ -106,23 +107,26 @@ public class Issue extends Resource {
             JSONObject req = new JSONObject();
             req.put("fields", fieldmap);
 
-            JSON result = null;
+            Map result = null;
 
             try {
-                result = restclient.post(getRestUri(null), req);
+                String resultJson = restclient.post(getRestUri(null), req);
+                if (resultJson!=null) {
+                    result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+                }
             } catch (Exception ex) {
                 throw new JiraException("Failed to create issue", ex);
             }
 
-            if (!(result instanceof JSONObject) || !((JSONObject) result).containsKey("key")
-                    || !(((JSONObject) result).get("key") instanceof String)) {
+            if (result == null || !result.containsKey("key")
+                    || !(result.get("key") instanceof String)) {
                 throw new JiraException("Unexpected result on create issue");
             }
 
             if (includedFields != null) {
-                return Issue.get(restclient, (String) ((JSONObject) result).get("key"), includedFields);
+                return Issue.get(restclient, (String) ((Map) result).get("key"), includedFields);
             } else {
-                return Issue.get(restclient, (String) ((JSONObject) result).get("key"));
+                return Issue.get(restclient, (String) ((Map) result).get("key"));
             }
         }
 
@@ -308,22 +312,21 @@ public class Issue extends Resource {
      */
     public static int count(RestClient restclient, String jql) throws JiraException {
         final String j = jql;
-        JSON result = null;
+        Map result = null;
         try {
             Map<String, String> queryParams = new HashMap<String, String>();
             queryParams.put("jql", j);
             queryParams.put("maxResults", "1");
             URI searchUri = restclient.buildURI(getBaseUri() + "search", queryParams);
-            result = restclient.get(searchUri);
+            String resultJson = restclient.get(searchUri);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to search issues", ex);
         }
 
-        if (!(result instanceof JSONObject)) {
-            throw new JiraException("JSON payload is malformed");
-        }
-        Map map = (Map) result;
-        return Field.getInteger(map.get("total"));
+        return Field.getInteger(result.get("total"));
     }
 
     /**
@@ -333,9 +336,9 @@ public class Issue extends Resource {
 
         Map<String, Object> fields = new HashMap<String, Object>();
         Map<String, List> fieldOpers = new HashMap<String, List>();
-        JSONObject editmeta = null;
+        Map editmeta = null;
 
-        private FluentUpdate(JSONObject editmeta) {
+        private FluentUpdate(Map editmeta) {
             this.editmeta = editmeta;
         }
 
@@ -533,6 +536,7 @@ public class Issue extends Resource {
      * issues when the iterator reaches the last of the current page.
      */
     private static class IssueIterator implements Iterator<Issue> {
+
         private Iterator<Issue> currentPage;
         private RestClient restclient;
         private Issue nextIssue;
@@ -544,9 +548,12 @@ public class Issue extends Resource {
         private Integer startAt;
         private List<Issue> issues;
         private int total;
-        
-        public IssueIterator(RestClient restclient, String resourcePath, String jql, String includedFields,
-                             String expandFields, Integer maxResults, Integer startAt)
+        private JqlValidateParameter jqlValidateParameter;
+
+        public IssueIterator(RestClient restclient, String resourcePath, String jql,
+            String includedFields,
+            String expandFields, Integer maxResults, Integer startAt,
+            JqlValidateParameter jqlValidateParameter)
                              throws JiraException {
             this.restclient = restclient;
             this.resourcePath = resourcePath;
@@ -555,6 +562,7 @@ public class Issue extends Resource {
             this.expandFields = expandFields;
             this.maxResults = maxResults;
             this.startAt = startAt;
+            this.jqlValidateParameter = jqlValidateParameter;
         }
         
         @Override
@@ -633,28 +641,28 @@ public class Issue extends Resource {
                 startAt = startAt + issues.size();
             }
 
-            JSON result = null;
+            Map result = null;
 
             try {
                 URI searchUri = createSearchURI(restclient, resourcePath, jql, includedFields,
-                        expandFields, maxResults, startAt);
-                result = restclient.get(searchUri);
+                        expandFields, maxResults, startAt, jqlValidateParameter);
+                String resultJson = restclient.get(searchUri);
+                if (resultJson!=null) {
+                    result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+                }
             } catch (Exception ex) {
                 throw new JiraException("Failed to search issues", ex);
             }
 
-            if (!(result instanceof JSONObject)) {
+            if (result==null) {
                 throw new JiraException("JSON payload is malformed");
             }
-
-            
             Map map = (Map) result;
-    
             this.startAt = Field.getInteger(map.get("startAt"));
             this.maxResults = Field.getInteger(map.get("maxResults"));
             this.total = Field.getInteger(map.get("total"));
-            this.issues = Field.getResourceArray(Issue.class, map.get("issues"), restclient);
-            return issues;
+            this.issues = Field.getResourceArray(Issue.class, map.get("issues"), this.restclient);
+            return this.issues;
         }
     }
     
@@ -679,8 +687,10 @@ public class Issue extends Resource {
         public List<Issue> issues = null;
         private IssueIterator issueIterator;
 
-        public SearchResult(RestClient restclient, String resourcePath, String jql, String includedFields,
-                            String expandFields, Integer maxResults, Integer startAt)
+        public SearchResult(RestClient restclient, String resourcePath, String jql,
+            String includedFields,
+            String expandFields, Integer maxResults, Integer startAt,
+            JqlValidateParameter validateParameter)
                             throws JiraException {
             this.issueIterator = new IssueIterator(
                 restclient,
@@ -689,7 +699,8 @@ public class Issue extends Resource {
                 includedFields,
                 expandFields,
                 maxResults,
-                startAt
+                startAt,
+                validateParameter
             );
             /* backwards compatibility shim - first page only */
             this.issueIterator.hasNext();
@@ -761,12 +772,20 @@ public class Issue extends Resource {
     }
 
     private String key = null;
+
     private Map fields = null;
+
+    @JsonProperty("fields")
+    public void fields(Map fields) {
+        this.fields = fields;
+        this.deserializeFields(fields);
+    }
 
     /* system fields */
     private User assignee = null;
     private String environment = null;
     private List<Attachment> attachments = null;
+    @JsonProperty("changelog")
     private ChangeLog changeLog = null;
     private List<Comment> comments = null;
     private List<Component> components = null;
@@ -801,14 +820,17 @@ public class Issue extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    public Issue(RestClient restclient, JSONObject json) {
+    public Issue(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    public Issue() {
+    }
+
+    private void deserialise(Map json) {
         Map map = json;
 
         id = Field.getString(map.get("id"));
@@ -816,6 +838,10 @@ public class Issue extends Resource {
         key = Field.getString(map.get("key"));
 
         fields = (Map)map.get("fields");
+        deserializeFields(map);
+    }
+
+    public void deserializeFields(Map map) {
         if (fields == null)
             return;
 
@@ -855,12 +881,12 @@ public class Issue extends Resource {
         return getBaseUri() + "issue/" + (key != null ? key : "");
     }
 
-    public static JSONObject getCreateMetadata(
+    public static Map getCreateMetadata(
         RestClient restclient, String project, String issueType) throws JiraException {
 
         final String pval = project;
         final String itval = issueType;
-        JSON result = null;
+        Map result = null;
 
         try {
             Map<String, String> params = new HashMap<String, String>();
@@ -870,23 +896,22 @@ public class Issue extends Resource {
             URI createuri = restclient.buildURI(
                 getBaseUri() + "issue/createmeta",
                 params);
-            result = restclient.get(createuri);
+            String resultJson = restclient.get(createuri);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve issue metadata", ex);
         }
 
-        if (!(result instanceof JSONObject))
-            throw new JiraException("JSON payload is malformed");
 
-        JSONObject jo = (JSONObject)result;
-
-        if (jo.isNullObject() || !jo.containsKey("projects") ||
-                !(jo.get("projects") instanceof JSONArray))
+        if (result == null || !result.containsKey("projects") ||
+                !(result.get("projects") instanceof List))
             throw new JiraException("Create metadata is malformed");
 
         List<Project> projects = Field.getResourceArray(
             Project.class,
-            (JSONArray)jo.get("projects"),
+            result.get("projects"),
             restclient);
 
         if (projects.isEmpty() || projects.get(0).getIssueTypes().isEmpty())
@@ -896,51 +921,55 @@ public class Issue extends Resource {
         return projects.get(0).getIssueTypes().get(0).getFields();
     }
 
-    private JSONObject getEditMetadata() throws JiraException {
-        JSON result = null;
+    private Map getEditMetadata() throws JiraException {
+        Map result = null;
 
         try {
-            result = restclient.get(getRestUri(key) + "/editmeta");
+            String resultJson = restclient.get(getRestUri(key) + "/editmeta");
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve issue metadata", ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        JSONObject jo = (JSONObject)result;
+        Map jo = (Map)result;
 
-        if (jo.isNullObject() || !jo.containsKey("fields") ||
-                !(jo.get("fields") instanceof JSONObject))
+        if (!jo.containsKey("fields") || !(jo.get("fields") instanceof Map))
             throw new JiraException("Edit metadata is malformed");
 
-        return (JSONObject)jo.get("fields");
+        return (Map)jo.get("fields");
     }
 
     public List<Transition> getTransitions() throws JiraException {
-        JSON result = null;
+        Map result = null;
 
         try {
             Map<String, String> params = new HashMap<String, String>();
             params.put("expand", "transitions.fields");
             URI transuri = restclient.buildURI(
                 getRestUri(key) + "/transitions",params);
-            result = restclient.get(transuri);
+            String resultJson = restclient.get(transuri);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve transitions", ex);
         }
 
-        JSONObject jo = (JSONObject)result;
 
-        if (jo.isNullObject() || !jo.containsKey("transitions") ||
-                !(jo.get("transitions") instanceof JSONArray))
+        if (result == null || !result.containsKey("transitions") ||
+                !(result.get("transitions") instanceof List))
             throw new JiraException("Transition metadata is missing.");
 
-        JSONArray transitions = (JSONArray) jo.get("transitions");
+        List transitions = (List) result.get("transitions");
 
         List<Transition> trans = new ArrayList<Transition>();
         for(Object obj: transitions){
-            JSONObject ob = (JSONObject) obj;
+            Map ob = (Map) obj;
             trans.add(new Transition(restclient, ob));
         }
 
@@ -1065,19 +1094,22 @@ public class Issue extends Resource {
             req.put("visibility", vis);
         }
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.post(getRestUri(key) + "/comment", req);
+            String resultJson = restclient.post(getRestUri(key) + "/comment", req);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed add comment to issue " + key, ex);
         }
 
-        if (!(result instanceof JSONObject)) {
+        if (result == null) {
             throw new JiraException("JSON payload is malformed");
         }
 
-        return new Comment(restclient, (JSONObject) result, key);
+        return new Comment(restclient, result, key);
     }
 
     /**
@@ -1190,23 +1222,22 @@ public class Issue extends Resource {
                 .field(Field.PARENT, getKey());
     }
 
-    private static JSONObject realGet(RestClient restclient, String key, Map<String, String> queryParams)
+    private static Map realGet(RestClient restclient, String key, Map<String, String> queryParams)
             throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
             URI uri = restclient.buildURI(getBaseUri() + "issue/" + key, queryParams);
-            result = restclient.get(uri);
+            String resultJson = restclient.get(uri);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve issue " + key, ex);
         }
 
-        if (!(result instanceof JSONObject)) {
-            throw new JiraException("JSON payload is malformed");
-        }
-
-        return (JSONObject) result;
+        return result;
     }
 
     /**
@@ -1318,13 +1349,15 @@ public class Issue extends Resource {
      *
      * @param expandFields fields to expand when obtaining the issue
      *
+     * @param validateParameter query validation type
+     *
      * @return a search result structure with results
      *
      * @throws JiraException when the search fails
      */
     public static SearchResult search(RestClient restclient, String resourcePath, String jql,
             String includedFields, String expandFields, Integer maxResults,
-            Integer startAt) throws JiraException {
+            Integer startAt, JqlValidateParameter validateParameter) throws JiraException {
 
         return new SearchResult(
             restclient,
@@ -1333,7 +1366,8 @@ public class Issue extends Resource {
             includedFields,
             expandFields,
             maxResults,
-            startAt
+            startAt,
+            validateParameter
         );
     }
 
@@ -1347,12 +1381,13 @@ public class Issue extends Resource {
      * @param expandFields
      * @param maxResults
      * @param startAt
+     * @param jqlValidateParameter
      * @return the URI to execute a jql search.
      * @throws URISyntaxException
      */
     private static URI createSearchURI(RestClient restclient, String resourcePath, String jql,
             String includedFields, String expandFields, Integer maxResults,
-            Integer startAt) throws URISyntaxException {
+            Integer startAt, JqlValidateParameter jqlValidateParameter) throws URISyntaxException {
         Map<String, String> queryParams = new HashMap<String, String>();
         if (jql != null) {
             queryParams.put("jql", jql);
@@ -1369,6 +1404,9 @@ public class Issue extends Resource {
         if (startAt != null) {
             queryParams.put("startAt", String.valueOf(startAt));
         }
+        if (jqlValidateParameter != null) {
+            queryParams.put("validateQuery", jqlValidateParameter.value);
+        }
 
         return resourcePath == null ? restclient.buildURI(getBaseUri() + "search", queryParams)
                 : restclient.buildURI(resourcePath, queryParams);
@@ -1381,7 +1419,7 @@ public class Issue extends Resource {
      * @throws JiraException when the retrieval fails
      */
     public void refresh() throws JiraException {
-        JSONObject result = realGet(restclient, key, new HashMap<String, String>());
+        Map result = realGet(restclient, key, new HashMap<String, String>());
         deserialise(result);
     }
 
@@ -1405,7 +1443,7 @@ public class Issue extends Resource {
 
         Map<String, String> queryParams = new HashMap<String, String>();
         queryParams.put("fields", includedFields);
-        JSONObject result = realGet(restclient, key, queryParams);
+        Map result = realGet(restclient, key, queryParams);
         deserialise(result);
     }
 
@@ -1587,11 +1625,13 @@ public class Issue extends Resource {
     }
 
     public List<RemoteLink> getRemoteLinks() throws JiraException {
-        JSONArray obj;
+        List obj = null;
         try {
             URI uri = restclient.buildURI(getRestUri(key) + "/remotelink");
-            JSON json = restclient.get(uri);
-            obj = (JSONArray) json;
+            String resultJson = restclient.get(uri);
+            if (resultJson!=null) {
+                obj = JsonUtil.OBJECT_MAPPER.readValue(resultJson, List.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to get remote links for issue "
                     + key, ex);
@@ -1641,11 +1681,13 @@ public class Issue extends Resource {
     }
 
     public List<WorkLog> getAllWorkLogs() throws JiraException {
-        JSONObject obj;
+        Map obj = null;
         try {
             URI uri = restclient.buildURI(getRestUri(key) + "/worklog");
-            JSON json = restclient.get(uri);
-            obj = (JSONObject) json;
+            String resultJson = restclient.get(uri);
+            if (resultJson!=null) {
+                obj = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to get worklog for issue "
                     + key, ex);

@@ -19,18 +19,14 @@
 
 package net.rcarz.jiraclient.greenhopper;
 
-import net.rcarz.jiraclient.Field;
-import net.rcarz.jiraclient.Issue;
 import net.rcarz.jiraclient.JiraException;
 import net.rcarz.jiraclient.RestClient;
+import net.rcarz.jiraclient.util.JsonUtil;
 
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
 
 /**
  * GreenHopper sprint statistics.
@@ -54,14 +50,14 @@ public class SprintReport {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected SprintReport(RestClient restclient, JSONObject json) {
+    protected SprintReport(RestClient restclient, Map json) {
         this.restclient = restclient;
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         sprint = GreenHopperField.getResource(Sprint.class, map.get("sprint"), restclient);
@@ -105,7 +101,7 @@ public class SprintReport {
 
         final int rvId = rv.getId();
         final int sprintId = sprint.getId();
-        JSON result = null;
+        Map result = null;
 
         try {
             URI reporturi = restclient.buildURI(
@@ -114,20 +110,23 @@ public class SprintReport {
                     put("rapidViewId", Integer.toString(rvId));
                     put("sprintId", Integer.toString(sprintId));
                 }});
-            result = restclient.get(reporturi);
+            String  resultJson = restclient.get(reporturi);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve sprint report", ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        JSONObject jo = (JSONObject)result;
+        Map jo = (Map)result;
 
-        if (!jo.containsKey("contents") || !(jo.get("contents") instanceof JSONObject))
+        if (!jo.containsKey("contents") || !(jo.get("contents") instanceof Map))
             throw new JiraException("Sprint report content is malformed");
 
-        return new SprintReport(restclient, (JSONObject)jo.get("contents"));
+        return new SprintReport(restclient, (Map)jo.get("contents"));
     }
 
     public Sprint getSprint() {

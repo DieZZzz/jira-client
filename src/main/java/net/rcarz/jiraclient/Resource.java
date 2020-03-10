@@ -40,6 +40,9 @@ public abstract class Resource {
         this.restclient = restclient;
     }
 
+    public Resource() {
+    }
+
     /**
      * Gets the JIRA REST API revision number.
      */

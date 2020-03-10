@@ -19,7 +19,7 @@
 
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
+import net.rcarz.jiraclient.util.JsonUtil;
 import net.sf.json.JSONObject;
 
 import java.util.Date;
@@ -43,7 +43,7 @@ public class Comment extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Comment(RestClient restclient, JSONObject json, String issueKey) {
+    protected Comment(RestClient restclient, Map json, String issueKey) {
         super(restclient);
 
         this.issueKey = issueKey;
@@ -51,7 +51,10 @@ public class Comment extends Resource {
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    public Comment() {
+    }
+
+    private void deserialise(Map json) {
         Map map = json;
 
         self = Field.getString(map.get("self"));
@@ -77,18 +80,18 @@ public class Comment extends Resource {
     public static Comment get(RestClient restclient, String issue, String id)
         throws JiraException {
 
-        JSON result = null;
+        Map result = null;
 
         try {
-            result = restclient.get(getBaseUri() + "issue/" + issue + "/comment/" + id);
+            String resultJson = restclient.get(getBaseUri() + "issue/" + issue + "/comment/" + id);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve comment " + id + " on issue " + issue, ex);
         }
 
-        if (!(result instanceof JSONObject))
-            throw new JiraException("JSON payload is malformed");
-
-        return new Comment(restclient, (JSONObject)result, issue);
+        return new Comment(restclient, result, issue);
     }
 
     /**
@@ -127,20 +130,20 @@ public class Comment extends Resource {
             req.put("visibility", vis);
         }
 
-        JSON result = null;
+        Map result = null;
 
         try {
             String issueUri = getBaseUri() + "issue/" + issueKey;
-            result = restclient.put(issueUri + "/comment/" + id, req);
+            String resultJson = restclient.put(issueUri + "/comment/" + id, req);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
+
         } catch (Exception ex) {
             throw new JiraException("Failed add update comment " + id, ex);
         }
 
-        if (!(result instanceof JSONObject)) {
-            throw new JiraException("JSON payload is malformed");
-        }
-
-        deserialise((JSONObject) result);
+        deserialise(result);
     }
 
     @Override

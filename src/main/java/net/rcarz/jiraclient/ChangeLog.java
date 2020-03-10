@@ -19,10 +19,10 @@
 
 package net.rcarz.jiraclient;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 import java.util.Map;
-
-import net.sf.json.JSONObject;
 
 /**
  * Issue change log.
@@ -31,7 +31,11 @@ public class ChangeLog extends Resource {
     /**
      * List of change log entries.
      */
+    @JsonProperty("histories")
     private List<ChangeLogEntry> entries = null;
+
+    public ChangeLog() {
+    }
 
     /**
      * Creates a change log from a JSON payload.
@@ -39,7 +43,7 @@ public class ChangeLog extends Resource {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected ChangeLog(RestClient restclient, JSONObject json) {
+    protected ChangeLog(RestClient restclient, Map json) {
         super(restclient);
 
         if (json != null)
@@ -50,11 +54,10 @@ public class ChangeLog extends Resource {
      * Deserializes a change log from a json payload.
      * @param json the json payload
      */
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
-        entries = Field.getResourceArray(ChangeLogEntry.class, map.get(
-                Field.CHANGE_LOG_ENTRIES), restclient);
+        entries = Field.getResourceArray(ChangeLogEntry.class, map.get(Field.CHANGE_LOG_ENTRIES), restclient);
     }
 
     /**

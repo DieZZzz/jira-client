@@ -58,7 +58,7 @@ public class VotesTest {
         returnedFromService.put("votes", 12);
         returnedFromService.put("hasVoted", true);
 
-        PowerMockito.when(mockRestClient.get(anyString())).thenReturn(returnedFromService);
+        PowerMockito.when(mockRestClient.get(anyString())).thenReturn(returnedFromService.toString());
 
         final Votes votes = Votes.get(mockRestClient, "issueNumber");
 

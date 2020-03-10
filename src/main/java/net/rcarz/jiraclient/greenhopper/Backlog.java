@@ -22,16 +22,13 @@ package net.rcarz.jiraclient.greenhopper;
 import net.rcarz.jiraclient.Field;
 import net.rcarz.jiraclient.JiraException;
 import net.rcarz.jiraclient.RestClient;
+import net.rcarz.jiraclient.util.JsonUtil;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
 /**
  * GreenHopper backlog data.
@@ -58,14 +55,14 @@ public class Backlog {
      * @param restclient REST client instance
      * @param json JSON payload
      */
-    protected Backlog(RestClient restclient, JSONObject json) {
+    protected Backlog(RestClient restclient, Map json) {
         this.restclient = restclient;
 
         if (json != null)
             deserialise(json);
     }
 
-    private void deserialise(JSONObject json) {
+    private void deserialise(Map json) {
         Map map = json;
 
         issues = GreenHopperField.getResourceArray(
@@ -89,35 +86,35 @@ public class Backlog {
         maxIssuesExceeded = Field.getBoolean(map.get("maxIssuesExceeded"));
         queryResultLimit = Field.getInteger(map.get("queryResultLimit"));
 
-        if (map.containsKey("epicData") && map.get("epicData") instanceof JSONObject) {
+        if (map.containsKey("epicData") && map.get("epicData") instanceof Map) {
             Map epicData = (Map)map.get("epicData");
 
             epics = GreenHopperField.getResourceArray(Epic.class, epicData.get("epics"), restclient);
             canEditEpics = Field.getBoolean(epicData.get("canEditEpics"));
         }
 
-        if (map.containsKey("versionData") && map.get("versionData") instanceof JSONObject) {
-            Map verData = (JSONObject)map.get("versionData");
+        if (map.containsKey("versionData") && map.get("versionData") instanceof Map) {
+            Map verData = (Map) map.get("versionData");
 
             if (verData.containsKey("versionsPerProject") &&
-                verData.get("versionsPerProject") instanceof JSONObject) {
+                verData.get("versionsPerProject") instanceof Map) {
 
                 Map verMap = (Map)verData.get("versionsPerProject");
-                versionsPerProject = new HashMap<String, List<RapidViewVersion>>();
+                versionsPerProject = new HashMap<>();
 
                 for (Map.Entry<String, Object> kvp : 
                      (Iterable<Map.Entry<String, Object>>)verMap.entrySet()) {
 
-                    if (!(kvp.getValue() instanceof JSONArray))
+                    if (!(kvp.getValue() instanceof List))
                         continue;
 
                     List<RapidViewVersion> versions = new ArrayList<RapidViewVersion>();
 
-                    for (Object item : (JSONArray)kvp.getValue()) {
-                        if (!(item instanceof JSONObject))
+                    for (Object item : (List)kvp.getValue()) {
+                        if (!(item instanceof Map))
                             continue;
 
-                        RapidViewVersion ver = new RapidViewVersion(restclient, (JSONObject)item);
+                        RapidViewVersion ver = new RapidViewVersion(restclient, (Map)item);
                         versions.add(ver);
                     }
 
@@ -160,7 +157,7 @@ public class Backlog {
         throws JiraException {
 
         final int rvId = rv.getId();
-        JSON result = null;
+        Map result = null;
 
         try {
             URI reporturi = restclient.buildURI(
@@ -168,15 +165,18 @@ public class Backlog {
                 new HashMap<String, String>() {{
                     put("rapidViewId", Integer.toString(rvId));
                 }});
-            result = restclient.get(reporturi);
+            String resultJson = restclient.get(reporturi);
+            if (resultJson!=null) {
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+            }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve backlog data", ex);
         }
 
-        if (!(result instanceof JSONObject))
+        if (result == null)
             throw new JiraException("JSON payload is malformed");
 
-        return new Backlog(restclient, (JSONObject)result);
+        return new Backlog(restclient, result);
     }
 
     public List<SprintIssue> getIssues() {
