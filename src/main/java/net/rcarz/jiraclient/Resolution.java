@@ -97,12 +97,12 @@ public class Resolution extends Resource {
      * @throws JiraException when the retrieval fails
      */
     public static List<Resolution> get(RestClient restclient) throws JiraException {
-        Map result = null;
+        List result = null;
 
         try {
             String resultJson = restclient.get(getBaseUri() + "resolution/");
             if (resultJson!=null) {
-                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, Map.class);
+                result = JsonUtil.OBJECT_MAPPER.readValue(resultJson, List.class);
             }
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve resolution list", ex);
