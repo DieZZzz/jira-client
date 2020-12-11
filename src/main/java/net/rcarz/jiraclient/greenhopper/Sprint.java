@@ -36,6 +36,7 @@ public class Sprint extends GreenHopperResource {
     private boolean closed = false;
     private DateTime startDate = null;
     private DateTime endDate = null;
+    private DateTime activatedDate;
     private DateTime completeDate = null;
     private List<Integer> issuesIds = null;
     private List<SprintIssue> issues = null;
@@ -61,6 +62,7 @@ public class Sprint extends GreenHopperResource {
         closed = Field.getBoolean(map.get("closed"));
         startDate = GreenHopperField.getDateTime(map.get("startDate"));
         endDate = GreenHopperField.getDateTime(map.get("endDate"));
+        activatedDate = GreenHopperField.getDateTime(map.get("activatedDate"));
         completeDate = GreenHopperField.getDateTime(map.get("completeDate"));
         issuesIds = GreenHopperField.getIntegerArray(map.get("issuesIds"));
     }
@@ -84,6 +86,10 @@ public class Sprint extends GreenHopperResource {
 
     public DateTime getEndDate() {
         return endDate;
+    }
+
+    public DateTime getActivatedDate() {
+        return activatedDate;
     }
 
     public DateTime getCompleteDate() {

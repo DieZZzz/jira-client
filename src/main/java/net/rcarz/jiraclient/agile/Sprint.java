@@ -39,6 +39,7 @@ public class Sprint extends AgileResource {
     private long originBoardId;
     private Date startDate;
     private Date endDate;
+    private Date activatedDate;
     private Date completeDate;
 
     /**
@@ -244,6 +245,7 @@ public class Sprint extends AgileResource {
         originBoardId = getLong(json.get("originBoardId"));
         startDate = Field.getDateTimeSprint(json.get("startDate"));
         endDate = Field.getDateTimeSprint(json.get("endDate"));
+        activatedDate = Field.getDateTimeSprint(json.get("activatedDate"));
         completeDate = Field.getDateTimeSprint(json.get("completeDate"));
     }
 
@@ -263,6 +265,10 @@ public class Sprint extends AgileResource {
         return endDate;
     }
 
+    public Date getActivatedDate() {
+        return activatedDate;
+    }
+    
     public Date getCompleteDate() {
         return completeDate;
     }
